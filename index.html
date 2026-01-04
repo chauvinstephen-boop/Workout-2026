@@ -33,7 +33,19 @@ input[type="text"] { width:100%; padding:8px; border:1px solid var(--border); bo
 .nav-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:10px; display:flex; justify-content:space-around; z-index:200; }
 button.nav-btn { background:transparent; color:var(--text); border:none; padding:8px; font-size:0.8rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; }
 button.nav-btn.active { color:var(--primary); font-weight:bold; }
-.back-btn { background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; margin-right:10px; }
+.back-btn { background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; margin-right:10px; padding: 10px; }
+
+/* Mobile Optimizations */
+@media (min-width: 600px) {
+    .charts-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 599px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .home-grid { grid-template-columns: 1fr; }
+    .summary-dashboard { grid-template-columns: repeat(4, 1fr); }
+    /* Ensure inputs don't zoom on iOS */
+    select, input[type="text"], input[type="date"] { font-size: 16px !important; }
+}
 </style>
 </head>
 <body>
@@ -215,8 +227,8 @@ function renderAnalytics() {
     
     // Container for lift charts
     const liftsContainer = document.createElement('div');
+    liftsContainer.className = 'charts-grid';
     liftsContainer.style.display = 'grid';
-    liftsContainer.style.gridTemplateColumns = '1fr 1fr';
     liftsContainer.style.gap = '10px';
     
     lifts.forEach(lift => {
@@ -704,23 +716,7 @@ function checkAndLogDayCompletion(uid) {
     const d = parseInt(parts[1].substring(1));
     
     // Check all exercises for this day
-    const dayWorkouts = workoutData.filter(i => i.w === w && i.d === d);
     let allDone = true;
-    
-    for (const item of dayWorkouts) {
-        // Reconstruct uid for each item to check status
-        // We need the index logic again...
-         const dayIdx={};
-         // To properly reconstruct UIDs we need to iterate globally or just scan logic
-         // Simplified: Get all stored sets for this week/day combination
-         // This is getting complex to reconstruct UIDs on the fly.
-         // Better: Iterate all items for this day, generate their UIDs, check status.
-    }
-    
-    // Correct approach to check entire day completion:
-    // 1. Get all exercises for current w/d
-    // 2. For each, get sets from LS
-    // 3. Check if all sets are done
     
     // We need to know the index of each exercise to generate UID
     // Let's filter workoutData to get exactly the items for this day in order
@@ -741,8 +737,7 @@ function checkAndLogDayCompletion(uid) {
             localStorage.setItem(completionKey, today);
         }
     } else {
-        // If they uncheck something, remove the completion date?
-        // Usually safer to keep it or remove it. Let's remove it for accuracy.
+        // If they uncheck something, remove the completion date
         localStorage.removeItem(completionKey);
     }
 }
