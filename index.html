@@ -71,29 +71,136 @@ const workoutData = [];
 
     for(let w=1; w<=8; w++) {
         // Day 1: Upper
-        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ...u}));
+        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
         // Day 2: Short Ruck
-        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", set:"1", rep:`${3 + (w-1)*0.5} miles`, load:"30lb"});
+        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: "30lb"});
         // Day 3: Lower
-        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ...l}));
+        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
         // Day 4: Base Ruck
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", set:"1", rep:`${4 + (w-1)*0.5} miles`, load:"30lb"});
+        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "30lb"});
         // Day 5: Conditioning
-        cond.forEach(c => workoutData.push({w, d:5, focus:"Conditioning", ...c}));
+        cond.forEach(c => workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load}));
         // Day 6: Long Ruck
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", set:"1", rep:`${6 + w} miles`, load:"30-45lb"});
+        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: `${6 + w} miles`, defaultLoad: "30-45lb"});
         // Day 7: Rest
-        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", set:"1", rep:"30 min", load:"-"});
+        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
     }
 })();
+
+function getSets(uid, defaultSets, defaultReps, defaultLoad) {
+    const saved = localStorage.getItem(uid + '_sets');
+    if (saved) return JSON.parse(saved);
+    const sets = [];
+    for (let i = 0; i < defaultSets; i++) {
+        sets.push({ reps: defaultReps, load: defaultLoad, done: false });
+    }
+    return sets;
+}
+
 
 let currentWeek=1,currentDay=1,startDate=new Date();
 function toggleTheme(){const body=document.body;const current=body.getAttribute('data-theme');if(current==='dark'){body.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{body.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}}
 if(localStorage.getItem('theme')==='dark'){document.body.setAttribute('data-theme','dark');}
 function exportNotes(){let notes='Workout Notes:\\n';for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.endsWith('_note')){notes+=key+': '+localStorage.getItem(key)+'\\n';}}const blob=new Blob([notes],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ruck_notes.txt';a.click();URL.revokeObjectURL(url);}
-function updateSummary(){const dashboard=document.getElementById('summary-dashboard');dashboard.innerHTML='';const counts={};for(let w=1;w<=8;w++)counts[w]={total:0,done:0};const dayIdx={};workoutData.forEach(item=>{if(item.w<1||item.w>8)return;const k=`${item.w}-${item.d}`;if(dayIdx[k]===undefined)dayIdx[k]=0;const idx=dayIdx[k]++;const uid=`w${item.w}-d${item.d}-i${idx}`;counts[item.w].total++;if(localStorage.getItem(uid+'_done')==='true')counts[item.w].done++;});for(let w=1;w<=8;w++){const{total,done}=counts[w];const percent=total?Math.round((done/total)*100):0;const card=document.createElement('div');card.className='summary-card';card.innerHTML='Week '+w+'<div class="summary-progress"><div class="summary-fill" style="width:'+percent+'%"></div></div>'+percent+'%';dashboard.appendChild(card);}}
-function renderWorkout(){const container=document.getElementById('workout-container');container.innerHTML='';document.getElementById('week-selector').value=currentWeek;document.getElementById('current-date-display').textContent=`Week ${currentWeek} • ${getDayName(currentDay)}`;const daysExercises=workoutData.filter(i=>i.w===currentWeek&&i.d===currentDay);if(daysExercises.length===0){container.innerHTML='<div class="empty-state">No workout scheduled.</div>';return;}daysExercises.forEach((ex,index)=>{const uid=`w${currentWeek}-d${currentDay}-i${index}`;const isDone=localStorage.getItem(uid+'_done')==='true';const savedNote=localStorage.getItem(uid+'_note')||'';const card=document.createElement('div');card.className=`exercise-card ${isDone?'completed':''}`;card.id='card-'+uid;card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}</div><div class="exercise-details">${ex.set} sets × ${ex.rep} • Target: ${ex.load}</div></div><label class="check-container"><input type="checkbox" ${isDone?'checked':''} onchange="toggleComplete('${uid}',this.checked)"></label></div><div class="input-group"><input type="text" placeholder="Notes" value="${savedNote}" oninput="saveNote('${uid}',this.value)"></div>`;container.appendChild(card);});updateSummary();}
-function toggleComplete(id,isChecked){localStorage.setItem(id+'_done',isChecked);const card=document.getElementById('card-'+id);if(isChecked)card.classList.add('completed');else card.classList.remove('completed');updateSummary();}
+function updateSummary(){const dashboard=document.getElementById('summary-dashboard');dashboard.innerHTML='';const counts={};for(let w=1;w<=8;w++)counts[w]={total:0,done:0};const dayIdx={};workoutData.forEach(item=>{if(item.w<1||item.w>8)return;const k=`${item.w}-${item.d}`;if(dayIdx[k]===undefined)dayIdx[k]=0;const idx=dayIdx[k]++;const uid=`w${item.w}-d${item.d}-i${idx}`;
+    const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
+    sets.forEach(s => {
+        counts[item.w].total++;
+        if(s.done) counts[item.w].done++;
+    });
+});for(let w=1;w<=8;w++){const{total,done}=counts[w];const percent=total?Math.round((done/total)*100):0;const card=document.createElement('div');card.className='summary-card';card.innerHTML='Week '+w+'<div class="summary-progress"><div class="summary-fill" style="width:'+percent+'%"></div></div>'+percent+'%';dashboard.appendChild(card);}}
+function renderWorkout(){const container=document.getElementById('workout-container');container.innerHTML='';document.getElementById('week-selector').value=currentWeek;document.getElementById('current-date-display').textContent=`Week ${currentWeek} • ${getDayName(currentDay)}`;const daysExercises=workoutData.filter(i=>i.w===currentWeek&&i.d===currentDay);if(daysExercises.length===0){container.innerHTML='<div class="empty-state">No workout scheduled.</div>';return;}daysExercises.forEach((ex,index)=>{const uid=`w${currentWeek}-d${currentDay}-i${index}`;const sets=getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);const savedNote=localStorage.getItem(uid+'_note')||'';
+    const card=document.createElement('div');card.className='exercise-card';card.id='card-'+uid;
+    let setsHtml = '';
+    sets.forEach((s, sIdx) => {
+        setsHtml += `<div class="set-row" style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
+            <div style="width:30px;text-align:center;font-weight:bold;color:#64748b;">${sIdx+1}</div>
+            <input type="text" value="${s.reps}" placeholder="Reps" onchange="updateSet('${uid}',${sIdx},'reps',this.value)" style="width:80px;">
+            <input type="text" value="${s.load}" placeholder="Load" onchange="updateSet('${uid}',${sIdx},'load',this.value)" style="flex:1;">
+            <input type="checkbox" ${s.done?'checked':''} onchange="updateSet('${uid}',${sIdx},'done',this.checked)" style="width:24px;height:24px;">
+            <button onclick="deleteSet('${uid}',${sIdx})" style="background:#ef4444;color:white;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>`;
+    });
+    
+    card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}</div></div></div>
+    <div id="sets-${uid}">${setsHtml}</div>
+    <button onclick="addSet('${uid}')" style="background:var(--primary);color:white;border:none;padding:4px 8px;border-radius:4px;font-size:0.8rem;cursor:pointer;margin-bottom:10px;">+ Add Set</button>
+    <div class="input-group"><input type="text" placeholder="Notes" value="${savedNote}" oninput="saveNote('${uid}',this.value)"></div>`;container.appendChild(card);});updateSummary();}
+
+function updateSet(uid, setIdx, field, value) {
+    const currentSets = JSON.parse(localStorage.getItem(uid + '_sets') || '[]');
+    // If we can't find it in local storage, we need to regenerate default state first (edge case but possible)
+    if (currentSets.length === 0) {
+       // Ideally we'd need the defaults again, but simpler is just to reload the page or handle gracefully.
+       // For now, let's assume getSets was called and saved or we can re-derive.
+       // Actually, getSets returns the array but doesn't auto-save to LS until modified.
+       // So we need to call getSets again to get the base array to modify.
+       // To do this properly without passing defaults everywhere, we can look up the exercise in workoutData.
+       // But that's slow. Better approach: store initial state if not present.
+    }
+    // Re-getting state safely:
+    let sets = [];
+    const saved = localStorage.getItem(uid + '_sets');
+    if (saved) {
+        sets = JSON.parse(saved);
+    } else {
+         // Find original defaults
+         const parts = uid.split('-'); // w1-d1-i0
+         const w = parseInt(parts[0].substring(1));
+         const d = parseInt(parts[1].substring(1));
+         const i = parseInt(parts[2].substring(1));
+         // Need to reconstruct the day index logic or filter again
+         const daysExercises = workoutData.filter(item => item.w === w && item.d === d);
+         const ex = daysExercises[i];
+         sets = getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
+    }
+    
+    sets[setIdx][field] = value;
+    localStorage.setItem(uid + '_sets', JSON.stringify(sets));
+    renderWorkout(); // Re-render to update UI/Summary
+}
+
+function addSet(uid) {
+    let sets = [];
+    const saved = localStorage.getItem(uid + '_sets');
+    if (saved) {
+        sets = JSON.parse(saved);
+    } else {
+         // Same fallback logic
+         const parts = uid.split('-'); 
+         const w = parseInt(parts[0].substring(1));
+         const d = parseInt(parts[1].substring(1));
+         const i = parseInt(parts[2].substring(1));
+         const daysExercises = workoutData.filter(item => item.w === w && item.d === d);
+         const ex = daysExercises[i];
+         sets = getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
+    }
+    // Duplicate last set or add default
+    const last = sets[sets.length-1];
+    sets.push({ reps: last ? last.reps : '-', load: last ? last.load : '-', done: false });
+    localStorage.setItem(uid + '_sets', JSON.stringify(sets));
+    renderWorkout();
+}
+
+function deleteSet(uid, setIdx) {
+     let sets = [];
+    const saved = localStorage.getItem(uid + '_sets');
+    if (saved) {
+        sets = JSON.parse(saved);
+    } else {
+         // Same fallback logic to ensure we don't delete from empty air
+         const parts = uid.split('-'); 
+         const w = parseInt(parts[0].substring(1));
+         const d = parseInt(parts[1].substring(1));
+         const i = parseInt(parts[2].substring(1));
+         const daysExercises = workoutData.filter(item => item.w === w && item.d === d);
+         const ex = daysExercises[i];
+         sets = getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
+    }
+    sets.splice(setIdx, 1);
+    localStorage.setItem(uid + '_sets', JSON.stringify(sets));
+    renderWorkout();
+}
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
 function getDayName(d){const names=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];return names[d-1]||"Day "+d;}
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
