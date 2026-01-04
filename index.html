@@ -35,6 +35,10 @@ button.nav-btn { background:transparent; color:var(--text); border:none; padding
 button.nav-btn.active { color:var(--primary); font-weight:bold; }
 .back-btn { background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; margin-right:10px; padding: 10px; }
 
+.prev-val { font-size: 0.75rem; color: var(--primary); background: #eff6ff; padding: 2px 6px; border-radius: 4px; cursor: pointer; margin-left: 5px; border: 1px solid #bfdbfe; white-space: nowrap; }
+.prev-val:active { background: #dbeafe; }
+body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; color: #93c5fd; }
+
 /* Mobile Optimizations */
 @media (min-width: 600px) {
     .charts-grid { grid-template-columns: 1fr 1fr; }
@@ -235,6 +239,28 @@ function getSets(uid, defaultSets, defaultReps, defaultLoad) {
         sets.push({ reps: defaultReps || '-', load: defaultLoad || '-', done: false });
     }
     return sets;
+}
+
+// Helper to find previous workout data for an exercise
+function getLastLog(exerciseName, currentW, currentD) {
+    const history = workoutData.filter(item =>
+        item.ex === exerciseName &&
+        (item.w < currentW || (item.w === currentW && item.d < currentD))
+    );
+    history.sort((a, b) => {
+        if (a.w !== b.w) return b.w - a.w;
+        return b.d - a.d;
+    });
+
+    for (const item of history) {
+        // Find uid
+        const dayItems = workoutData.filter(i => i.w === item.w && i.d === item.d);
+        const idx = dayItems.indexOf(item);
+        const uid = `w${item.w}-d${item.d}-i${idx}`;
+        const saved = localStorage.getItem(uid + '_sets');
+        if (saved) return JSON.parse(saved);
+    }
+    return null;
 }
 
 // Navigation Logic
@@ -857,12 +883,25 @@ function renderWorkout(){
         card.className='exercise-card';
         card.id='card-'+uid;
         
+        // Find previous log
+        const lastLog = getLastLog(ex.ex, currentWeek, currentDay);
+        
         let setsHtml = '';
         sets.forEach((s, sIdx) => {
+            let prevLabel = '';
+            if (lastLog && lastLog[sIdx]) {
+                const prevLoad = lastLog[sIdx].load;
+                // Only show if it's not the default placeholder
+                if (prevLoad && prevLoad !== '-') {
+                    prevLabel = `<div class="prev-val" onclick="updateSet('${uid}', ${sIdx}, 'load', '${prevLoad}')" title="Copy previous load">Prev: ${prevLoad}</div>`;
+                }
+            }
+            
             setsHtml += `<div class="set-row" style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
                 <div style="width:30px;text-align:center;font-weight:bold;color:#64748b;">${sIdx+1}</div>
                 <input type="text" value="${s.reps}" placeholder="Reps" onchange="updateSet('${uid}',${sIdx},'reps',this.value)" style="width:80px;">
-                <input type="text" value="${s.load}" placeholder="Load" onchange="updateSet('${uid}',${sIdx},'load',this.value)" style="flex:1;">
+                <input type="text" value="${s.load}" placeholder="Load" onchange="updateSet('${uid}',${sIdx},'load',this.value)" style="flex:1;min-width:60px;">
+                ${prevLabel}
                 <input type="checkbox" ${s.done?'checked':''} onchange="updateSet('${uid}',${sIdx},'done',this.checked)" style="width:24px;height:24px;">
                 <button onclick="deleteSet('${uid}',${sIdx})" style="background:#ef4444;color:white;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">×</button>
             </div>`;
