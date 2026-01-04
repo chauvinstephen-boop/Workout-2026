@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>8-Week Ruck & Strength Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 manifest.json
 <style>
 :root { --primary:#2563eb; --bg:#f8fafc; --card:#fff; --text:#1e293b; --border:#e2e8f0; --success:#10b981; }
@@ -81,7 +82,12 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
     </div>
     
     <h3 style="margin-top:30px;">Activity Calendar</h3>
-    <div id="activity-calendar" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;margin-top:10px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button onclick="changeCalendarMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text);">←</button>
+        <span id="calendar-month-year" style="font-weight:bold;font-size:0.9rem;"></span>
+        <button onclick="changeCalendarMonth(1)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text);">→</button>
+    </div>
+    <div id="activity-calendar" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;"></div>
 </div>
 
 <div id="view-settings" class="view-container">
@@ -192,84 +198,147 @@ function navigateTo(view) {
 function renderAnalytics() {
     const container = document.getElementById('analytics-content');
     container.innerHTML = '';
-
-    // Calculate Estimated 1RM for big lifts
+    
+    // Create canvas elements
     const lifts = ['Bench Press', 'Back Squat', 'Deadlift', 'OHP'];
-    const maxes = {};
-
-    workoutData.forEach((ex, idx) => {
-        if (!lifts.includes(ex.ex)) return;
-        // Find all sets for this exercise type across all weeks
-        // We need to iterate all possible UIDs for this exercise.
-        // Simplified: iterate 8 weeks.
+    
+    // Container for lift charts
+    const liftsContainer = document.createElement('div');
+    liftsContainer.style.display = 'grid';
+    liftsContainer.style.gridTemplateColumns = '1fr 1fr';
+    liftsContainer.style.gap = '10px';
+    
+    lifts.forEach(lift => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'summary-card';
+        wrapper.style.padding = '10px';
+        wrapper.innerHTML = `<div style="font-size:0.8rem;font-weight:bold;margin-bottom:5px;">${lift} (Est. 1RM)</div><canvas id="chart-${lift.replace(/\s/g,'')}"></canvas>`;
+        liftsContainer.appendChild(wrapper);
     });
-
-    // Better approach: Iterate all keys in localStorage to find sets
-    // But sets are stored by UID. We need to map UID to exercise name.
     
-    // Let's iterate through the workoutData structure again to find all instances
-    // then check if they have saved data.
+    // Container for Ruck Chart
+    const ruckWrapper = document.createElement('div');
+    ruckWrapper.className = 'summary-card';
+    ruckWrapper.style.padding = '10px';
+    ruckWrapper.style.marginTop = '15px';
+    ruckWrapper.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Rucking Volume (Miles)</div><canvas id="chart-ruck"></canvas>`;
     
-    lifts.forEach(lift => maxes[lift] = 0);
-
+    container.appendChild(liftsContainer);
+    container.appendChild(ruckWrapper);
+    
+    // Gather Data
+    // We want to track progress over time. Let's group by Week.
+    // Structure: { Week1: {Bench: 180, Squat: 225...}, Week2: ... }
+    const weeklyMaxes = {};
+    const weeklyRuck = {}; // { Week1: 5, Week2: 6... }
+    
+    for(let w=1; w<=8; w++) {
+        weeklyMaxes[w] = {};
+        weeklyRuck[w] = 0;
+        lifts.forEach(l => weeklyMaxes[w][l] = 0);
+    }
+    
     workoutData.forEach((item) => {
-        if (!lifts.includes(item.ex)) return;
-        
-        // Construct UID for this item
-        // We need the index 'i' relative to the day.
-        // This is tricky because workoutData is flat. 
-        // We need to know which index this item is within its day.
-        
-        // Re-filter to find index
+        // Construct UID
         const daysExercises = workoutData.filter(d => d.w === item.w && d.d === item.d);
         const index = daysExercises.indexOf(item);
-        
         const uid = `w${item.w}-d${item.d}-i${index}`;
         const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
         
-        sets.forEach(s => {
-            if (s.done) {
-                // Parse load and reps
-                const load = parseFloat(s.load);
-                const reps = parseFloat(s.reps);
-                if (!isNaN(load) && !isNaN(reps) && reps > 0) {
-                    // Epley Formula: 1RM = weight * (1 + reps/30)
-                    const e1rm = load * (1 + reps/30);
-                    if (e1rm > maxes[item.ex]) {
-                        maxes[item.ex] = e1rm;
+        // Rucking Logic
+        if (item.ex === "Ruck March" && item.focus.includes("Ruck")) {
+            // Check if done
+            const isDone = sets.every(s => s.done);
+            if (isDone) {
+               // Try to parse miles from reps (e.g., "3 miles")
+               // Default reps is string like "3 miles" or "3 + (w-1)..."
+               // We need the ACTUAL saved value if edited, or default.
+               // sets[0].reps should have it.
+               const repStr = sets[0].reps.toLowerCase();
+               const miles = parseFloat(repStr);
+               if (!isNaN(miles)) {
+                   weeklyRuck[item.w] += miles;
+               }
+            }
+        }
+        
+        // Lift Logic
+        if (lifts.includes(item.ex)) {
+            sets.forEach(s => {
+                if (s.done) {
+                    const load = parseFloat(s.load);
+                    const reps = parseFloat(s.reps);
+                    if (!isNaN(load) && !isNaN(reps) && reps > 0) {
+                        const e1rm = load * (1 + reps/30);
+                        if (e1rm > weeklyMaxes[item.w][item.ex]) {
+                            weeklyMaxes[item.w][item.ex] = e1rm;
+                        }
                     }
+                }
+            });
+        }
+    });
+    
+    // Render Lift Charts
+    const weeksLabel = Array.from({length:8}, (_, i) => `W${i+1}`);
+    
+    lifts.forEach(lift => {
+        const ctx = document.getElementById(`chart-${lift.replace(/\s/g,'')}`).getContext('2d');
+        const data = [];
+        for(let w=1; w<=8; w++) {
+            data.push(weeklyMaxes[w][lift] || 0); // 0 means no data for that week
+        }
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: weeksLabel,
+                datasets: [{
+                    label: '1RM',
+                    data: data,
+                    backgroundColor: '#2563eb',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: true, ticks: {font:{size:10}} },
+                    y: { beginAtZero: false, display: true, ticks: {font:{size:10}} }
                 }
             }
         });
     });
-
-    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-    for (const [lift, val] of Object.entries(maxes)) {
-        html += `<div class="summary-card" style="padding:15px;">
-            <div style="font-weight:bold;color:#64748b;font-size:0.9rem;">${lift}</div>
-            <div style="font-size:1.4rem;font-weight:800;margin-top:5px;">${Math.round(val)} <span style="font-size:0.9rem;font-weight:400;">lb</span></div>
-            <div style="font-size:0.7rem;color:#94a3b8;">Est. 1RM</div>
-        </div>`;
-    }
-    html += '</div>';
     
-    html += '<h3 style="margin-top:20px;">Workout Consistency</h3>';
-    // Calculate total workouts done vs total available up to current date
-    // Simple stat: Total sets completed
-    let totalSetsDone = 0;
-    for(let i=0; i<localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.endsWith('_sets')) {
-            const sets = JSON.parse(localStorage.getItem(key));
-            sets.forEach(s => { if(s.done) totalSetsDone++; });
-        }
+    // Render Ruck Chart
+    const ruckCtx = document.getElementById('chart-ruck').getContext('2d');
+    const ruckData = [];
+    for(let w=1; w<=8; w++) {
+        ruckData.push(weeklyRuck[w]);
     }
-    html += `<div class="exercise-card">
-        <div style="font-size:1.1rem;font-weight:bold;">${totalSetsDone}</div>
-        <div style="color:#64748b;font-size:0.9rem;">Total Sets Completed</div>
-    </div>`;
-
-    container.innerHTML = html;
+    
+    new Chart(ruckCtx, {
+        type: 'line',
+        data: {
+            labels: weeksLabel,
+            datasets: [{
+                label: 'Miles',
+                data: ruckData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
 }
 
 function resetData() {
@@ -318,20 +387,34 @@ function updateSummary(){
     renderCalendar();
 }
 
+let calDate = new Date();
+
+function changeCalendarMonth(offset) {
+    calDate.setMonth(calDate.getMonth() + offset);
+    renderCalendar();
+}
+
 function renderCalendar() {
     const calContainer = document.getElementById('activity-calendar');
+    const headerEl = document.getElementById('calendar-month-year');
     calContainer.innerHTML = '';
     
-    // Generate last 28 days
-    const today = new Date();
-    const days = [];
-    for(let i=27; i>=0; i--) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        days.push(d);
-    }
+    // Set Header
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    headerEl.textContent = `${monthNames[calDate.getMonth()]} ${calDate.getFullYear()}`;
     
-    // Find all completion dates
+    // Calculate Grid
+    // First day of current month
+    const firstDay = new Date(calDate.getFullYear(), calDate.getMonth(), 1);
+    // Number of days in current month
+    const lastDay = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0);
+    const numDays = lastDay.getDate();
+    
+    // Start offset (Day of week: 0=Sun, 1=Mon...)
+    // If we want Monday start, we adjust. Let's assume standard Sunday start for calendar grid visualization
+    const startOffset = firstDay.getDay(); 
+    
+    // Find completion dates
     const completedDates = new Set();
     for(let i=0; i<localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -340,22 +423,61 @@ function renderCalendar() {
         }
     }
     
-    days.forEach(d => {
-        const dateStr = d.toISOString().split('T')[0];
+    // Day Headers (S M T W T F S)
+    const dayHeaders = ['S','M','T','W','T','F','S'];
+    dayHeaders.forEach(h => {
+        const hEl = document.createElement('div');
+        hEl.style.textAlign = 'center';
+        hEl.style.fontSize = '0.7rem';
+        hEl.style.fontWeight = 'bold';
+        hEl.style.color = '#64748b';
+        hEl.textContent = h;
+        calContainer.appendChild(hEl);
+    });
+
+    // Empty cells for offset
+    for(let i=0; i<startOffset; i++) {
+        calContainer.appendChild(document.createElement('div'));
+    }
+    
+    // Actual Days
+    for(let i=1; i<=numDays; i++) {
+        // Construct YYYY-MM-DD for checking
+        // Month is 0-indexed in JS Date, but we need 01-12 for string
+        const currentCheck = new Date(calDate.getFullYear(), calDate.getMonth(), i);
+        // Adjust for timezone offset to ensure string match is correct for local
+        // Safer to just build string manually to avoid timezone shifts
+        const y = currentCheck.getFullYear();
+        const m = String(currentCheck.getMonth()+1).padStart(2,'0');
+        const d = String(currentCheck.getDate()).padStart(2,'0');
+        const dateStr = `${y}-${m}-${d}`;
+        
         const isCompleted = completedDates.has(dateStr);
+        
         const dayEl = document.createElement('div');
         dayEl.style.aspectRatio = '1';
         dayEl.style.borderRadius = '4px';
-        dayEl.style.fontSize = '0.7rem';
+        dayEl.style.fontSize = '0.8rem';
         dayEl.style.display = 'flex';
         dayEl.style.alignItems = 'center';
         dayEl.style.justifyContent = 'center';
-        dayEl.style.background = isCompleted ? 'var(--success)' : 'var(--border)';
-        dayEl.style.color = isCompleted ? 'white' : '#64748b';
-        dayEl.title = dateStr;
-        dayEl.textContent = d.getDate();
+        dayEl.style.cursor = 'default';
+        
+        if (isCompleted) {
+             dayEl.style.background = 'var(--success)';
+             dayEl.style.color = 'white';
+        } else {
+             // Check if today
+             const today = new Date();
+             if (today.toDateString() === currentCheck.toDateString()) {
+                 dayEl.style.border = '2px solid var(--primary)';
+                 dayEl.style.fontWeight = 'bold';
+             }
+        }
+        
+        dayEl.textContent = i;
         calContainer.appendChild(dayEl);
-    });
+    }
 }
 
 function showWeekDetail(week) {
