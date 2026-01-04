@@ -112,6 +112,13 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
         <label style="display:block;margin-bottom:5px;font-weight:bold;">Bodyweight (lbs)</label>
         <input type="number" id="user-bw-input" placeholder="e.g. 185" oninput="saveBodyweight(this.value)" style="width:100%;padding:10px;font-size:1rem;">
     </div>
+    <div style="margin-bottom:20px;">
+        <label style="display:block;margin-bottom:5px;font-weight:bold;">Gender</label>
+        <select id="user-gender-select" onchange="saveGender(this.value)" style="width:100%;padding:10px;font-size:1rem;">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select>
+    </div>
     <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">Toggle Dark Mode</div>
     <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">Export Notes</div>
     <div class="home-btn" onclick="resetData()" style="background:#ef4444;color:white;margin-top:20px;">⚠️ Reset All Data</div>
@@ -338,18 +345,28 @@ function renderAnalytics() {
     
     // Render Standards Chart if BW exists
     if (!isNaN(bw) && bw > 0) {
-        // Multipliers (Approximate male standards)
-        // Bench: 0.75, 1.15, 1.5
-        // Squat: 1.0, 1.5, 2.0
-        // Deadlift: 1.25, 1.75, 2.25
-        // OHP: 0.5, 0.75, 1.0
+        // Multipliers (Approximate male/female standards)
+        const gender = localStorage.getItem('userGender') || 'male';
         
-        const standards = {
-            'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
-            'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
-            'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
-            'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
-        };
+        let standards = {};
+        
+        if (gender === 'female') {
+            // Female Standards (approx multipliers)
+            standards = {
+                'Bench Press': { beg: 0.5, int: 0.75, adv: 1.0 },
+                'Back Squat': { beg: 0.75, int: 1.15, adv: 1.5 },
+                'Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
+                'OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
+            };
+        } else {
+            // Male Standards
+            standards = {
+                'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
+                'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
+                'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+                'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
+            };
+        }
         
         const labels = lifts;
         const userVals = lifts.map(l => Math.round(currentMaxes[l]));
@@ -373,7 +390,8 @@ function renderAnalytics() {
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true, title: {display:true, text:'Weight (lbs)'} } },
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: `Standards for ${gender.charAt(0).toUpperCase() + gender.slice(1)}` }
                 }
             }
         });
@@ -544,6 +562,14 @@ function saveUserName(name) {
 
 function saveBodyweight(bw) {
     localStorage.setItem('userBodyweight', bw);
+    // Refresh analytics if view is active
+    if(document.getElementById('view-analytics').classList.contains('active')) {
+        renderAnalytics();
+    }
+}
+
+function saveGender(gender) {
+    localStorage.setItem('userGender', gender);
     // Refresh analytics if view is active
     if(document.getElementById('view-analytics').classList.contains('active')) {
         renderAnalytics();
@@ -873,6 +899,10 @@ window.onload=function(){
     // Set bodyweight input
     const savedBW = localStorage.getItem('userBodyweight');
     if(savedBW) document.getElementById('user-bw-input').value = savedBW;
+    
+    // Set gender input
+    const savedGender = localStorage.getItem('userGender') || 'male';
+    document.getElementById('user-gender-select').value = savedGender;
     
     if(savedStart){
         startDate=parseLocal(savedStart);
