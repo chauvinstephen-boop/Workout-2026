@@ -151,15 +151,15 @@ const workoutData = [];
         // Day 1: Upper
         upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
         // Day 2: Short Ruck
-        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: "30lb"});
+        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: "30lb", defaultNote: "Pace: 15-20 min/mile. Terrain: Varied if possible."});
         // Day 3: Lower
         lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
         // Day 4: Base Ruck
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "30lb"});
+        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "30lb", defaultNote: "Pace: Steady aerobic zone. Focus on posture."});
         // Day 5: Conditioning
         cond.forEach(c => workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load}));
         // Day 6: Long Ruck
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: `${6 + w} miles`, defaultLoad: "30-45lb"});
+        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: `${6 + w} miles`, defaultLoad: "30-45lb", defaultNote: "Pace: Comfortable endurance pace. Bring hydration."});
         // Day 7: Rest
         workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
     }
@@ -763,7 +763,14 @@ function renderWorkout(){
     daysExercises.forEach((ex,index)=>{
         const uid=`w${currentWeek}-d${currentDay}-i${index}`;
         const sets=getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
-        const savedNote=localStorage.getItem(uid+'_note')||'';
+        // Use saved note if exists, otherwise default note if available
+        let savedNote=localStorage.getItem(uid+'_note');
+        if (savedNote === null && ex.defaultNote) {
+            savedNote = ex.defaultNote;
+            // Optionally auto-save this default note so user can edit it
+            localStorage.setItem(uid+'_note', savedNote);
+        }
+        savedNote = savedNote || '';
         
         const card=document.createElement('div');
         card.className='exercise-card';
