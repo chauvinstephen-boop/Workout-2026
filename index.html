@@ -76,6 +76,16 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
         <div><label style="font-size:0.8rem;color:#64748b">Jump to:</label><select id="week-selector"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option></select></div>
     </div>
     <div class="subtitle" id="current-date-display" style="text-align:center;margin-bottom:1rem;font-weight:600;color:var(--text);">Today</div>
+    
+    <!-- Timer Section -->
+    <div id="workout-timer" style="background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div id="timer-display" style="font-size:2rem; font-weight:700; font-family:monospace; color:var(--text); letter-spacing:1px;">00:00</div>
+        <div style="display:flex; gap:10px;">
+            <button id="timer-btn-toggle" onclick="toggleTimer()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Start</button>
+            <button onclick="resetTimer()" style="background:transparent; color:#64748b; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Reset</button>
+        </div>
+    </div>
+
     <div id="workout-container"></div>
     <div style="display:flex;justify-content:space-between;margin-top:20px;">
         <button class="nav-btn" onclick="changeDay(-1)" style="background:var(--primary);color:white;border-radius:8px;padding:10px 20px;">← Prev</button>
@@ -1024,6 +1034,66 @@ function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
 function jumpToToday(){calculateCurrentDay();renderWorkout();}
 function changeDay(offset){currentDay+=offset;if(currentDay>7){currentDay=1;currentWeek++;}else if(currentDay<1){currentDay=7;currentWeek--;}if(currentWeek>8){currentWeek=8;currentDay=7;}if(currentWeek<1){currentWeek=1;currentDay=1;}renderWorkout();}
+
+// Timer Logic
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+
+function toggleTimer() {
+    const btn = document.getElementById('timer-btn-toggle');
+    if (timerRunning) {
+        // Pause
+        clearInterval(timerInterval);
+        timerRunning = false;
+        if(btn) {
+            btn.textContent = 'Start';
+            btn.style.background = 'var(--primary)';
+        }
+    } else {
+        // Start
+        if(!timerInterval || !timerRunning) {
+             timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        timerRunning = true;
+        if(btn) {
+            btn.textContent = 'Pause';
+            btn.style.background = '#f59e0b'; // Amber
+        }
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSeconds = 0;
+    updateTimerDisplay();
+    const btn = document.getElementById('timer-btn-toggle');
+    if(btn) {
+        btn.textContent = 'Start';
+        btn.style.background = 'var(--primary)';
+    }
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById('timer-display');
+    if (!display) return;
+    
+    const hrs = Math.floor(timerSeconds / 3600);
+    const mins = Math.floor((timerSeconds % 3600) / 60);
+    const secs = timerSeconds % 60;
+    
+    let text = '';
+    if (hrs > 0) {
+        text += String(hrs).padStart(2, '0') + ':';
+    }
+    text += String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    display.textContent = text;
+}
+
 window.onload=function(){
     const savedStart=localStorage.getItem('ruckStartDate');
     const datePicker=document.getElementById('start-date-picker');
