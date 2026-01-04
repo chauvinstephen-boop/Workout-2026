@@ -45,7 +45,7 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
     </div>
 </header>
 
-<div id="view-home" class="view-container active">
+<div id="view-home" class="view-container">
     <div class="home-grid">
         <div class="home-btn" onclick="navigateTo('workout')">🏋️ Workout</div>
         <div class="home-btn" onclick="navigateTo('analytics')">📊 Analytics</div>
@@ -92,6 +92,10 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
 
 <div id="view-settings" class="view-container">
     <h2>Settings</h2>
+    <div style="margin-bottom:20px;">
+        <label style="display:block;margin-bottom:5px;font-weight:bold;">Your Name</label>
+        <input type="text" id="user-name-input" placeholder="Enter your name" oninput="saveUserName(this.value)" style="width:100%;padding:10px;font-size:1rem;">
+    </div>
     <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">Toggle Dark Mode</div>
     <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">Export Notes</div>
     <div class="home-btn" onclick="resetData()" style="background:#ef4444;color:white;margin-top:20px;">⚠️ Reset All Data</div>
@@ -176,12 +180,19 @@ function navigateTo(view) {
     document.getElementById('view-' + view).classList.add('active');
     
     const backBtn = document.getElementById('header-back-btn');
+    const titleEl = document.getElementById('app-title');
+    const name = localStorage.getItem('userName');
+    
     if (view === 'home') {
         backBtn.style.display = 'none';
-        document.getElementById('app-title').textContent = 'Training Tracker';
+        titleEl.textContent = 'Training Tracker';
     } else {
         backBtn.style.display = 'block';
-        document.getElementById('app-title').textContent = view.charAt(0).toUpperCase() + view.slice(1);
+        let viewName = view.charAt(0).toUpperCase() + view.slice(1);
+        if (view === 'dashboard' && name) {
+            viewName = `${name}'s Dashboard`;
+        }
+        titleEl.textContent = viewName;
     }
 
     if (view === 'workout') {
@@ -385,6 +396,72 @@ function updateSummary(){
     }
     
     renderCalendar();
+}
+
+// Quotes
+const quotes = [
+    "Strength does not come from winning. Your struggles develop your strengths.",
+    "The only bad workout is the one that didn't happen.",
+    "Don't stop when you're tired. Stop when you're done.",
+    "Your body can stand almost anything. It's your mind that you have to convince.",
+    "The pain you feel today will be the strength you feel tomorrow.",
+    "Discipline is doing what needs to be done, even if you don't want to do it."
+];
+
+function showGreeting() {
+    const name = localStorage.getItem('userName') || 'Friend';
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    
+    // Create Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'greeting-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'var(--bg)';
+    overlay.style.color = 'var(--text)';
+    overlay.style.zIndex = '1000';
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.textAlign = 'center';
+    overlay.style.padding = '20px';
+    overlay.style.transition = 'opacity 0.5s ease';
+    
+    overlay.innerHTML = `
+        <h1 style="font-size:2rem;margin-bottom:20px;">Welcome, ${name}</h1>
+        <p style="font-size:1.2rem;font-style:italic;max-width:500px;line-height:1.5;">"${quote}"</p>
+        <button onclick="closeGreeting()" style="margin-top:40px;padding:10px 25px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">Let's Go</button>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function closeGreeting() {
+    const overlay = document.getElementById('greeting-overlay');
+    if(overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 500);
+    }
+}
+
+function saveUserName(name) {
+    localStorage.setItem('userName', name);
+    updateHeaderName();
+}
+
+function updateHeaderName() {
+    const name = localStorage.getItem('userName');
+    const titleEl = document.getElementById('app-title');
+    // Only update if on Dashboard or Home, otherwise keep view title
+    // Actually, user asked for name at top of main screen.
+    // Let's modify navigateTo to handle title updates dynamiclly.
+    if(name && document.getElementById('view-dashboard').classList.contains('active')) {
+         titleEl.textContent = `Dashboard - ${name}`;
+    }
 }
 
 let calDate = new Date();
@@ -705,7 +782,40 @@ function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
 function jumpToToday(){calculateCurrentDay();renderWorkout();}
 function changeDay(offset){currentDay+=offset;if(currentDay>7){currentDay=1;currentWeek++;}else if(currentDay<1){currentDay=7;currentWeek--;}if(currentWeek>8){currentWeek=8;currentDay=7;}if(currentWeek<1){currentWeek=1;currentDay=1;}renderWorkout();}
-window.onload=function(){const savedStart=localStorage.getItem('ruckStartDate');const datePicker=document.getElementById('start-date-picker');if(savedStart){startDate=parseLocal(savedStart);datePicker.value=savedStart;}else{const now=new Date();const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0'),d=String(now.getDate()).padStart(2,'0');const str=`${y}-${m}-${d}`;datePicker.value=str;localStorage.setItem('ruckStartDate',str);startDate=parseLocal(str);}calculateCurrentDay();renderWorkout();if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js');}};
+window.onload=function(){
+    const savedStart=localStorage.getItem('ruckStartDate');
+    const datePicker=document.getElementById('start-date-picker');
+    
+    // Set user name input
+    const savedName = localStorage.getItem('userName');
+    if(savedName) document.getElementById('user-name-input').value = savedName;
+    
+    if(savedStart){
+        startDate=parseLocal(savedStart);
+        datePicker.value=savedStart;
+    }else{
+        const now=new Date();
+        const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0'),d=String(now.getDate()).padStart(2,'0');
+        const str=`${y}-${m}-${d}`;
+        datePicker.value=str;
+        localStorage.setItem('ruckStartDate',str);
+        startDate=parseLocal(str);
+    }
+    
+    calculateCurrentDay();
+    renderWorkout();
+    
+    // Initialize Dashboard as default view
+    // But we need to make sure summary is updated
+    navigateTo('dashboard');
+    
+    // Show Greeting
+    showGreeting();
+    
+    if('serviceWorker' in navigator){
+        navigator.serviceWorker.register('service-worker.js');
+    }
+};
 document.getElementById('start-date-picker').addEventListener('change',function(e){localStorage.setItem('ruckStartDate',e.target.value);startDate=parseLocal(e.target.value);calculateCurrentDay();renderWorkout();});
 document.getElementById('week-selector').addEventListener('change',function(e){currentWeek=parseInt(e.target.value);currentDay=1;renderWorkout();});
 </script>
