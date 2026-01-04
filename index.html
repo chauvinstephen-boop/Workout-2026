@@ -304,10 +304,21 @@ function navigateTo(view) {
     }
 }
 
+// Chart instances management
+const chartInstances = {};
+
 // Analytics Logic
 function renderAnalytics() {
     const container = document.getElementById('analytics-content');
     container.innerHTML = '';
+    
+    // Destroy existing charts to prevent canvas reuse errors
+    Object.keys(chartInstances).forEach(key => {
+        if(chartInstances[key]) {
+            chartInstances[key].destroy();
+            delete chartInstances[key];
+        }
+    });
     
     // Create canvas elements
     const lifts = ['Bench Press', 'Back Squat', 'Deadlift', 'OHP'];
@@ -450,7 +461,7 @@ function renderAnalytics() {
         const intVals = lifts.map(l => Math.round(bw * standards[l].int));
         const advVals = lifts.map(l => Math.round(bw * standards[l].adv));
         
-        new Chart(document.getElementById('chart-standards').getContext('2d'), {
+        chartInstances['chart-standards'] = new Chart(document.getElementById('chart-standards').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: labels,
@@ -477,13 +488,14 @@ function renderAnalytics() {
     const weeksLabel = Array.from({length:8}, (_, i) => `W${i+1}`);
     
     lifts.forEach(lift => {
-        const ctx = document.getElementById(`chart-${lift.replace(/\s/g,'')}`).getContext('2d');
+        const chartId = `chart-${lift.replace(/\s/g,'')}`;
+        const ctx = document.getElementById(chartId).getContext('2d');
         const data = [];
         for(let w=1; w<=8; w++) {
             data.push(weeklyMaxes[w][lift] || 0); // 0 means no data for that week
         }
         
-        new Chart(ctx, {
+        chartInstances[chartId] = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: weeksLabel,
@@ -512,7 +524,7 @@ function renderAnalytics() {
         ruckData.push(weeklyRuck[w]);
     }
     
-    new Chart(ruckCtx, {
+    chartInstances['chart-ruck'] = new Chart(ruckCtx, {
         type: 'line',
         data: {
             labels: weeksLabel,
@@ -909,8 +921,8 @@ function renderWorkout(){
             
             setsHtml += `<div class="set-row" style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
                 <div style="width:30px;text-align:center;font-weight:bold;color:#64748b;">${sIdx+1}</div>
-                <input type="text" value="${s.reps}" placeholder="Reps" onchange="updateSet('${uid}',${sIdx},'reps',this.value)" style="width:80px;">
-                <input type="text" value="${s.load}" placeholder="Load" onchange="updateSet('${uid}',${sIdx},'load',this.value)" style="flex:1;min-width:60px;">
+                <input type="text" id="input-reps-${uid}-${sIdx}" value="${s.reps}" placeholder="Reps" onchange="updateSet('${uid}',${sIdx},'reps',this.value)" style="width:80px;">
+                <input type="text" id="input-load-${uid}-${sIdx}" value="${s.load}" placeholder="Load" onchange="updateSet('${uid}',${sIdx},'load',this.value)" style="flex:1;min-width:60px;">
                 ${prevLabel}
                 <input type="checkbox" ${s.done?'checked':''} onchange="updateSet('${uid}',${sIdx},'done',this.checked)" style="width:24px;height:24px;">
                 <button onclick="deleteSet('${uid}',${sIdx})" style="background:#ef4444;color:white;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">×</button>
@@ -950,7 +962,18 @@ function updateSet(uid, setIdx, field, value) {
             // Check if day is complete and log date
             checkAndLogDayCompletion(uid);
             
-            renderWorkout();
+            // Optimization: Don't re-render entire workout for text inputs to preserve focus
+            if (field === 'done') {
+                 renderWorkout();
+            } else {
+                // Manually update the DOM element if it exists (handles "copy previous" clicks)
+                // where the DOM hasn't been updated by user typing
+                const inputId = `input-${field}-${uid}-${setIdx}`;
+                const el = document.getElementById(inputId);
+                if(el) el.value = value;
+                
+                updateSummary();
+            }
         }
     } catch (e) {
         alert("Error updating set: " + e.message);
@@ -1037,8 +1060,9 @@ function changeDay(offset){currentDay+=offset;if(currentDay>7){currentDay=1;curr
 
 // Timer Logic
 let timerInterval = null;
-let timerSeconds = 0;
+let timerStartTime = 0;
 let timerRunning = false;
+let timerPausedTime = 0; // Accumulated time when paused
 
 function toggleTimer() {
     const btn = document.getElementById('timer-btn-toggle');
@@ -1046,19 +1070,31 @@ function toggleTimer() {
         // Pause
         clearInterval(timerInterval);
         timerRunning = false;
+        
+        // Save current accumulated time
+        const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+        timerPausedTime += elapsed;
+        
+        // Clear saved start time (state is now paused with accumulated time)
+        localStorage.removeItem('timerStartTime');
+        localStorage.setItem('timerPausedTime', timerPausedTime);
+        
         if(btn) {
             btn.textContent = 'Start';
             btn.style.background = 'var(--primary)';
         }
     } else {
-        // Start
-        if(!timerInterval || !timerRunning) {
-             timerInterval = setInterval(() => {
-                timerSeconds++;
-                updateTimerDisplay();
-            }, 1000);
-        }
+        // Start/Resume
+        timerStartTime = Date.now();
+        localStorage.setItem('timerStartTime', timerStartTime);
+        
+        // If we have paused time, keep it in storage? No, we just add it to display
+        // Actually, easiest way to track total elapsed is:
+        // Total = (Current - Start) + Paused
+        
+        timerInterval = setInterval(updateTimerDisplay, 1000);
         timerRunning = true;
+        
         if(btn) {
             btn.textContent = 'Pause';
             btn.style.background = '#f59e0b'; // Amber
@@ -1069,8 +1105,11 @@ function toggleTimer() {
 function resetTimer() {
     clearInterval(timerInterval);
     timerRunning = false;
-    timerSeconds = 0;
-    updateTimerDisplay();
+    timerPausedTime = 0;
+    localStorage.removeItem('timerStartTime');
+    localStorage.removeItem('timerPausedTime');
+    updateTimerDisplay(true); // Force 00:00
+    
     const btn = document.getElementById('timer-btn-toggle');
     if(btn) {
         btn.textContent = 'Start';
@@ -1078,13 +1117,24 @@ function resetTimer() {
     }
 }
 
-function updateTimerDisplay() {
+function updateTimerDisplay(reset = false) {
     const display = document.getElementById('timer-display');
     if (!display) return;
     
-    const hrs = Math.floor(timerSeconds / 3600);
-    const mins = Math.floor((timerSeconds % 3600) / 60);
-    const secs = timerSeconds % 60;
+    let totalSeconds = 0;
+    
+    if (reset) {
+        totalSeconds = 0;
+    } else if (timerRunning) {
+        const currentElapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+        totalSeconds = currentElapsed + timerPausedTime;
+    } else {
+        totalSeconds = timerPausedTime;
+    }
+    
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
     
     let text = '';
     if (hrs > 0) {
@@ -1094,7 +1144,36 @@ function updateTimerDisplay() {
     display.textContent = text;
 }
 
+function initTimerState() {
+    const savedStart = localStorage.getItem('timerStartTime');
+    const savedPaused = localStorage.getItem('timerPausedTime');
+    
+    if (savedPaused) {
+        timerPausedTime = parseInt(savedPaused);
+    }
+    
+    if (savedStart) {
+        // It was running when left/reloaded
+        timerStartTime = parseInt(savedStart);
+        timerRunning = true;
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+        
+        // Update UI immediately
+        const btn = document.getElementById('timer-btn-toggle');
+        if(btn) {
+            btn.textContent = 'Pause';
+            btn.style.background = '#f59e0b';
+        }
+    } else if (savedPaused) {
+        // It was paused
+        updateTimerDisplay();
+    }
+}
+
 window.onload=function(){
+    // ... existing onload code ...
+    // Call initTimerState() at end
+
     const savedStart=localStorage.getItem('ruckStartDate');
     const datePicker=document.getElementById('start-date-picker');
     
@@ -1136,6 +1215,8 @@ window.onload=function(){
     if('serviceWorker' in navigator){
         navigator.serviceWorker.register('service-worker.js');
     }
+    
+    initTimerState();
 };
 document.getElementById('start-date-picker').addEventListener('change',function(e){localStorage.setItem('ruckStartDate',e.target.value);startDate=parseLocal(e.target.value);calculateCurrentDay();renderWorkout();});
 document.getElementById('week-selector').addEventListener('change',function(e){currentWeek=parseInt(e.target.value);currentDay=1;renderWorkout();});
