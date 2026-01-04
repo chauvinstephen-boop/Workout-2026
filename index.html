@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>8-Week Ruck & Strength Tracker</title>
-manifest.json
+<link rel="manifest" href="manifest.json">
 <style>
 :root { --primary:#2563eb; --bg:#f8fafc; --card:#fff; --text:#1e293b; --border:#e2e8f0; --success:#10b981; }
 body[data-theme="dark"] { --bg:#0f172a; --card:#1e293b; --text:#f8fafc; --border:#334155; }
 body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background-color:var(--bg); color:var(--text); margin:0; padding:0; padding-bottom:120px; }
 header { background:var(--primary); color:white; padding:1rem; position:sticky; top:0; z-index:100; display:flex; justify-content:space-between; align-items:center; }
 button.toggle-theme { background:white; color:var(--primary); border:none; padding:6px 12px; border-radius:6px; font-weight:600; cursor:pointer; }
-.controls { padding:1rem; display:flex; gap:10px; justify-content:space-between; align-items:center; background:white; border-bottom:1px solid var(--border); }
+.controls { padding:1rem; display:flex; gap:10px; justify-content:space-between; align-items:center; background:var(--card); border-bottom:1px solid var(--border); }
 select,input[type="date"] { padding:8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
 .container { max-width:600px; margin:0 auto; padding:1rem; }
 .summary-dashboard { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:15px; }
@@ -25,7 +25,7 @@ select,input[type="date"] { padding:8px; border:1px solid var(--border); border-
 .exercise-details { color:#64748b; font-size:0.9rem; margin-bottom:0.5rem; }
 .input-group { margin-top:10px; display:flex; gap:10px; }
 input[type="text"] { width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
-.nav-bar { position:fixed; bottom:0; left:0; right:0; background:white; border-top:1px solid var(--border); padding:1rem; display:flex; justify-content:space-around; max-width:600px; margin:0 auto; }
+.nav-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:1rem; display:flex; justify-content:space-around; max-width:600px; margin:0 auto; }
 button.nav-btn { background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; }
 .export-btn { margin-top:10px; background:var(--primary); color:white; padding:8px 12px; border:none; border-radius:6px; cursor:pointer; }
 .empty-state { text-align:center; padding:2rem; color:#64748b; }
