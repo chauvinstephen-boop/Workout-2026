@@ -117,10 +117,28 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
     
     <div style="margin-top:30px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
         <div style="padding:15px;background:var(--primary);color:white;font-weight:bold;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleProgramOverview()">
-            <span>Program Overview</span>
+            <span>Schedule Overview</span>
             <span id="overview-arrow">▼</span>
         </div>
         <div id="program-overview-content" style="display:none;padding:15px;"></div>
+    </div>
+
+    <!-- Strength Program Overview -->
+    <div style="margin-top:15px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="padding:15px;background:var(--primary);color:white;font-weight:bold;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleStrengthOverview()">
+            <span>Strength Program Overview</span>
+            <span id="strength-arrow">▼</span>
+        </div>
+        <div id="strength-overview-content" style="display:none;padding:15px;"></div>
+    </div>
+
+    <!-- Nutrition Overview -->
+    <div style="margin-top:15px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="padding:15px;background:var(--primary);color:white;font-weight:bold;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleNutritionOverview()">
+            <span>Nutrition Overview</span>
+            <span id="nutrition-arrow">▼</span>
+        </div>
+        <div id="nutrition-overview-content" style="display:none;padding:15px;"></div>
     </div>
 </div>
 
@@ -841,6 +859,76 @@ function toggleProgramOverview() {
         content.style.display = 'none';
         arrow.textContent = '▼';
     }
+}
+
+function toggleStrengthOverview() {
+    const content = document.getElementById('strength-overview-content');
+    const arrow = document.getElementById('strength-arrow');
+    if(content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▲';
+        renderStrengthOverview();
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
+
+function toggleNutritionOverview() {
+    const content = document.getElementById('nutrition-overview-content');
+    const arrow = document.getElementById('nutrition-arrow');
+    if(content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▲';
+        renderNutritionOverview();
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
+
+function renderStrengthOverview() {
+    const container = document.getElementById('strength-overview-content');
+    if(container.innerHTML !== '') return;
+    
+    container.innerHTML = `
+        <div style="margin-bottom:15px;">
+            <div style="font-weight:bold;color:var(--primary);">Weekly Structure</div>
+            <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
+                <li><strong>Day 1: Upper Body Strength</strong> (Bench, Pull-ups, Rows, OHP)</li>
+                <li><strong>Day 3: Lower Body Strength</strong> (Squat, Deadlift, Lunges, Plank)</li>
+                <li><strong>Day 5: Conditioning</strong> (High rep calisthenics & KB work)</li>
+            </ul>
+            
+            <div style="font-weight:bold;color:var(--primary);">Progression Guidelines</div>
+            <ul style="margin:5px 0 0 20px;padding:0;color:var(--text);font-size:0.9rem;">
+                <li><strong>Main Lifts:</strong> Aim to increase weight by 5-10lbs every 1-2 weeks when you hit the top end of the rep range with good form.</li>
+                <li><strong>Bodyweight Moves:</strong> Add reps or decrease rest times.</li>
+                <li><strong>Deload:</strong> If performance stalls for 2 weeks, reduce weight by 10% and build back up.</li>
+            </ul>
+        </div>
+    `;
+}
+
+function renderNutritionOverview() {
+    const container = document.getElementById('nutrition-overview-content');
+    if(container.innerHTML !== '') return;
+    
+    const bw = localStorage.getItem('userBodyweight') || 'your bodyweight';
+    
+    container.innerHTML = `
+        <div style="margin-bottom:15px;">
+            <div style="font-weight:bold;color:var(--primary);">Performance Fueling</div>
+            <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
+                <li><strong>Protein:</strong> Priority #1 for recovery. Aim for ~1g per lb of bodyweight (approx. ${bw}g/day).</li>
+                <li><strong>Hydration:</strong> Drink 3-4 liters of water daily. Add electrolytes for ruck days over 1 hour.</li>
+                <li><strong>Carbohydrates:</strong> Fuel for rucking. Eat a complex carb meal 2-3 hours before long rucks.</li>
+            </ul>
+            
+            <div style="font-weight:bold;color:var(--primary);">Recovery</div>
+            <div style="font-size:0.9rem;color:var(--text);">Sleep 7-9 hours. Active recovery (mobility/walking) on rest days helps flush metabolic waste.</div>
+        </div>
+    `;
 }
 
 function renderOverview() {
