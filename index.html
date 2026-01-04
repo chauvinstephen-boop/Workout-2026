@@ -836,15 +836,24 @@ function checkAndLogDayCompletion(uid) {
     dayItems.forEach((item, index) => {
         const itemUid = `w${w}-d${d}-i${index}`;
         const sets = getSets(itemUid, item.defaultSets, item.defaultReps, item.defaultLoad);
-        const isItemDone = sets.every(s => s.done);
-        if (!isItemDone) allDone = false;
+        // If no sets (deleted all), consider incomplete to avoid false positives
+        if (sets.length === 0) {
+            allDone = false;
+        } else {
+            const isItemDone = sets.every(s => s.done);
+            if (!isItemDone) allDone = false;
+        }
     });
 
     const completionKey = `completion_date_w${w}_d${d}`;
     if (allDone) {
         // Only set if not already set
         if (!localStorage.getItem(completionKey)) {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const dStr = String(now.getDate()).padStart(2, '0');
+            const today = `${y}-${m}-${dStr}`;
             localStorage.setItem(completionKey, today);
         }
     } else {
@@ -902,7 +911,8 @@ window.onload=function(){
     
     // Set gender input
     const savedGender = localStorage.getItem('userGender') || 'male';
-    document.getElementById('user-gender-select').value = savedGender;
+    const genderSelect = document.getElementById('user-gender-select');
+    if(genderSelect) genderSelect.value = savedGender;
     
     if(savedStart){
         startDate=parseLocal(savedStart);
