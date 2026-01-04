@@ -48,14 +48,44 @@ button.nav-btn { background:var(--primary); color:white; border:none; padding:10
 <div class="nav-bar"><button class="nav-btn" onclick="changeDay(-1)">← Prev</button><button class="nav-btn" onclick="jumpToToday()">Today</button><button class="nav-btn" onclick="changeDay(1)">Next →</button></div>
 <script>
 // Full workoutData array (all 8 weeks)
-const workoutData = [
-    { w:1,d:1,focus:"Upper Strength",ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb" },
-    { w:1,d:1,focus:"Upper Strength",ex:"Pull-ups",set:"4",rep:"4–8",load:"BW/Band" },
-    { w:1,d:1,focus:"Upper Strength",ex:"BB Row",set:"4",rep:"6–8",load:"Moderate" },
-    { w:1,d:1,focus:"Upper Strength",ex:"OHP",set:"3",rep:"6–8",load:"95 lb" },
-    { w:1,d:2,focus:"Ruck (Short)",ex:"Ruck March",set:"1",rep:"3 miles",load:"25lb @ 15:45/mi" },
-    // ... include ALL workouts from your original dataset here ...
-];
+const workoutData = [];
+(function generate() {
+    const upper = [
+        {ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb"},
+        {ex:"Pull-ups",set:"4",rep:"4–8",load:"BW"},
+        {ex:"BB Row",set:"4",rep:"6–8",load:"Moderate"},
+        {ex:"OHP",set:"3",rep:"6–8",load:"95 lb"}
+    ];
+    const lower = [
+        {ex:"Back Squat",set:"3",rep:"5",load:"225 lb"},
+        {ex:"Deadlift",set:"3",rep:"3",load:"315 lb"},
+        {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
+        {ex:"Plank",set:"3",rep:"60s",load:"BW"}
+    ];
+    const cond = [
+        {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
+        {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
+        {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
+        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb"}
+    ];
+
+    for(let w=1; w<=8; w++) {
+        // Day 1: Upper
+        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ...u}));
+        // Day 2: Short Ruck
+        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", set:"1", rep:`${3 + (w-1)*0.5} miles`, load:"30lb"});
+        // Day 3: Lower
+        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ...l}));
+        // Day 4: Base Ruck
+        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", set:"1", rep:`${4 + (w-1)*0.5} miles`, load:"30lb"});
+        // Day 5: Conditioning
+        cond.forEach(c => workoutData.push({w, d:5, focus:"Conditioning", ...c}));
+        // Day 6: Long Ruck
+        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", set:"1", rep:`${6 + w} miles`, load:"30-45lb"});
+        // Day 7: Rest
+        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", set:"1", rep:"30 min", load:"-"});
+    }
+})();
 
 let currentWeek=1,currentDay=1,startDate=new Date();
 function toggleTheme(){const body=document.body;const current=body.getAttribute('data-theme');if(current==='dark'){body.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{body.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}}
