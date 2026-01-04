@@ -108,6 +108,10 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
         <label style="display:block;margin-bottom:5px;font-weight:bold;">Your Name</label>
         <input type="text" id="user-name-input" placeholder="Enter your name" oninput="saveUserName(this.value)" style="width:100%;padding:10px;font-size:1rem;">
     </div>
+    <div style="margin-bottom:20px;">
+        <label style="display:block;margin-bottom:5px;font-weight:bold;">Bodyweight (lbs)</label>
+        <input type="number" id="user-bw-input" placeholder="e.g. 185" oninput="saveBodyweight(this.value)" style="width:100%;padding:10px;font-size:1rem;">
+    </div>
     <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">Toggle Dark Mode</div>
     <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">Export Notes</div>
     <div class="home-btn" onclick="resetData()" style="background:#ef4444;color:white;margin-top:20px;">⚠️ Reset All Data</div>
@@ -249,10 +253,35 @@ function renderAnalytics() {
     container.appendChild(liftsContainer);
     container.appendChild(ruckWrapper);
     
+    // Standards Section
+    const bw = parseFloat(localStorage.getItem('userBodyweight'));
+    if (!isNaN(bw) && bw > 0) {
+        const standardsContainer = document.createElement('div');
+        standardsContainer.className = 'summary-card';
+        standardsContainer.style.padding = '10px';
+        standardsContainer.style.marginTop = '15px';
+        
+        standardsContainer.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Strength Comparison (vs BW: ${bw}lb)</div>
+        <div style="height:300px;"><canvas id="chart-standards"></canvas></div>
+        <div style="font-size:0.7rem;color:#64748b;margin-top:5px;text-align:center;">Based on general strength standards multipliers</div>`;
+        
+        container.appendChild(standardsContainer);
+    } else {
+        const prompt = document.createElement('div');
+        prompt.className = 'summary-card';
+        prompt.style.padding = '15px';
+        prompt.style.marginTop = '15px';
+        prompt.style.textAlign = 'center';
+        prompt.innerHTML = `<p>Enter your <strong>Bodyweight</strong> in Settings to see Strength Standards comparison.</p>
+        <button onclick="navigateTo('settings')" style="background:var(--primary);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-top:5px;">Go to Settings</button>`;
+        container.appendChild(prompt);
+    }
+    
     // Gather Data
     // We want to track progress over time. Let's group by Week.
     // Structure: { Week1: {Bench: 180, Squat: 225...}, Week2: ... }
     const weeklyMaxes = {};
+    const currentMaxes = {}; // Latest best
     const weeklyRuck = {}; // { Week1: 5, Week2: 6... }
     
     for(let w=1; w<=8; w++) {
@@ -260,6 +289,8 @@ function renderAnalytics() {
         weeklyRuck[w] = 0;
         lifts.forEach(l => weeklyMaxes[w][l] = 0);
     }
+    
+    lifts.forEach(l => currentMaxes[l] = 0);
     
     workoutData.forEach((item) => {
         // Construct UID
@@ -296,11 +327,57 @@ function renderAnalytics() {
                         if (e1rm > weeklyMaxes[item.w][item.ex]) {
                             weeklyMaxes[item.w][item.ex] = e1rm;
                         }
+                        if (e1rm > currentMaxes[item.ex]) {
+                            currentMaxes[item.ex] = e1rm;
+                        }
                     }
                 }
             });
         }
     });
+    
+    // Render Standards Chart if BW exists
+    if (!isNaN(bw) && bw > 0) {
+        // Multipliers (Approximate male standards)
+        // Bench: 0.75, 1.15, 1.5
+        // Squat: 1.0, 1.5, 2.0
+        // Deadlift: 1.25, 1.75, 2.25
+        // OHP: 0.5, 0.75, 1.0
+        
+        const standards = {
+            'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
+            'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
+            'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+            'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
+        };
+        
+        const labels = lifts;
+        const userVals = lifts.map(l => Math.round(currentMaxes[l]));
+        const begVals = lifts.map(l => Math.round(bw * standards[l].beg));
+        const intVals = lifts.map(l => Math.round(bw * standards[l].int));
+        const advVals = lifts.map(l => Math.round(bw * standards[l].adv));
+        
+        new Chart(document.getElementById('chart-standards').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'You', data: userVals, backgroundColor: '#2563eb', borderRadius: 4 },
+                    { label: 'Beginner', data: begVals, backgroundColor: '#94a3b8', borderRadius: 4, hidden: true },
+                    { label: 'Intermediate', data: intVals, backgroundColor: '#fbbf24', borderRadius: 4 },
+                    { label: 'Advanced', data: advVals, backgroundColor: '#f87171', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, title: {display:true, text:'Weight (lbs)'} } },
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
     
     // Render Lift Charts
     const weeksLabel = Array.from({length:8}, (_, i) => `W${i+1}`);
@@ -463,6 +540,14 @@ function closeGreeting() {
 function saveUserName(name) {
     localStorage.setItem('userName', name);
     updateHeaderName();
+}
+
+function saveBodyweight(bw) {
+    localStorage.setItem('userBodyweight', bw);
+    // Refresh analytics if view is active
+    if(document.getElementById('view-analytics').classList.contains('active')) {
+        renderAnalytics();
+    }
 }
 
 function updateHeaderName() {
@@ -784,6 +869,10 @@ window.onload=function(){
     // Set user name input
     const savedName = localStorage.getItem('userName');
     if(savedName) document.getElementById('user-name-input').value = savedName;
+    
+    // Set bodyweight input
+    const savedBW = localStorage.getItem('userBodyweight');
+    if(savedBW) document.getElementById('user-bw-input').value = savedBW;
     
     if(savedStart){
         startDate=parseLocal(savedStart);
