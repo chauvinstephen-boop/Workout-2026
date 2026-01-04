@@ -100,6 +100,14 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
         <button onclick="changeCalendarMonth(1)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text);">→</button>
     </div>
     <div id="activity-calendar" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;"></div>
+    
+    <div style="margin-top:30px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="padding:15px;background:var(--primary);color:white;font-weight:bold;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleProgramOverview()">
+            <span>Program Overview</span>
+            <span id="overview-arrow">▼</span>
+        </div>
+        <div id="program-overview-content" style="display:none;padding:15px;"></div>
+    </div>
 </div>
 
 <div id="view-settings" class="view-container">
@@ -140,26 +148,58 @@ const workoutData = [];
         {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
         {ex:"Plank",set:"3",rep:"60s",load:"BW"}
     ];
+// Ruck Shuffle logic needs to be distinct or merged. Let's keep it as is but maybe add note?
     const cond = [
         {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
         {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
         {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
-        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb"}
+        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb", defaultNote: "Fast shuffle. Get heart rate up."}
     ];
 
     for(let w=1; w<=8; w++) {
+        // NFM Pacing Logic: 
+        // Goal: 18.6 miles (30km) in 4h 30m = ~14:30 min/mile pace with 25lb pack.
+        // Progression: Start slower/lighter, build speed/distance.
+        
+        // Pacing guidelines for 35yo male targeting NFM pass
+        let shortPace = "16:00-17:00 min/mi"; // Base building
+        let longPace = "17:00-18:00 min/mi"; // Endurance
+        let loadNote = "25-30lb";
+        
+        if (w >= 3 && w <= 5) {
+            shortPace = "15:00-16:00 min/mi";
+            longPace = "16:30-17:30 min/mi";
+            loadNote = "30-35lb";
+        } else if (w >= 6) {
+            shortPace = "14:30-15:00 min/mi"; // Race pace practice
+            longPace = "15:30-16:30 min/mi";
+            loadNote = "35-40lb (Train heavy)";
+        }
+
         // Day 1: Upper
         upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
-        // Day 2: Short Ruck
-        workoutData.push({w, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: "30lb", defaultNote: "Pace: 15-20 min/mile. Terrain: Varied if possible."});
+        
+        // Day 2: Short Ruck (Speed/Tempo)
+        workoutData.push({w, d:2, focus:"Ruck (Tempo)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: loadNote, defaultNote: `Target Pace: ${shortPace}. Focus on turnover and efficient stride. NFM Goal: Maintain sub-15:00 pace.`});
+        
         // Day 3: Lower
         lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
-        // Day 4: Base Ruck
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "30lb", defaultNote: "Pace: Steady aerobic zone. Focus on posture."});
+        
+        // Day 4: Base Ruck (Recovery/Base)
+        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "25-30lb", defaultNote: "Pace: Comfortable aerobic zone (17:00-19:00/mi). Focus on posture and breathing."});
+        
         // Day 5: Conditioning
-        cond.forEach(c => workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load}));
-        // Day 6: Long Ruck
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: `${6 + w} miles`, defaultLoad: "30-45lb", defaultNote: "Pace: Comfortable endurance pace. Bring hydration."});
+        cond.forEach(c => {
+             // Handle defaultNote for conditioning items specifically
+             const note = c.defaultNote || "";
+             workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load, defaultNote: note});
+        });
+        
+        // Day 6: Long Ruck (Endurance)
+        const longDist = w === 8 ? "18.6 miles (NFM Test)" : `${6 + w} miles`;
+        const longNote = w === 8 ? "Race Day! Target 4h 30m total time." : `Target Pace: ${longPace}. Build mental endurance. Hydrate every hour.`;
+        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: longDist, defaultLoad: loadNote, defaultNote: longNote});
+        
         // Day 7: Rest
         workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
     }
@@ -740,6 +780,47 @@ function showWeekDetail(week) {
         `;
         list.appendChild(dayItem);
     }
+}
+
+function toggleProgramOverview() {
+    const content = document.getElementById('program-overview-content');
+    const arrow = document.getElementById('overview-arrow');
+    if(content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▲';
+        renderOverview();
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
+
+function renderOverview() {
+    const container = document.getElementById('program-overview-content');
+    if(container.innerHTML !== '') return; // Already rendered
+    
+    let html = '';
+    
+    // Group by week
+    for(let w=1; w<=8; w++) {
+        const weekWorkouts = workoutData.filter(i => i.w === w);
+        // Find Ruck distances
+        const ruckShort = weekWorkouts.find(i => i.d === 2);
+        const ruckLong = weekWorkouts.find(i => i.d === 6);
+        
+        let ruckDesc = 'Focus: Build Base';
+        if(ruckShort && ruckLong) {
+            ruckDesc = `Rucks: ${ruckShort.defaultReps} & ${ruckLong.defaultReps}`;
+        }
+        
+        html += `<div style="margin-bottom:15px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:5px;">Week ${w}</div>
+            <div style="font-size:0.9rem;color:var(--text);">${ruckDesc}</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Strength: 3x sessions • Conditioning: 1x session</div>
+        </div>`;
+    }
+    
+    container.innerHTML = html;
 }
 
 function showDashboardOverview() {
