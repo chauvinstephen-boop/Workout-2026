@@ -79,6 +79,9 @@ button.nav-btn.active { color:var(--primary); font-weight:bold; }
         <button onclick="showDashboardOverview()" style="margin-bottom:15px;background:none;border:none;color:var(--primary);cursor:pointer;font-size:1rem;">← Back to Weeks</button>
         <div id="week-days-list"></div>
     </div>
+    
+    <h3 style="margin-top:30px;">Activity Calendar</h3>
+    <div id="activity-calendar" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;margin-top:10px;"></div>
 </div>
 
 <div id="view-settings" class="view-container">
@@ -311,6 +314,48 @@ function updateSummary(){
         card.innerHTML='Week '+w+'<div class="summary-progress"><div class="summary-fill" style="width:'+percent+'%"></div></div>'+percent+'%';
         dashboard.appendChild(card);
     }
+    
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const calContainer = document.getElementById('activity-calendar');
+    calContainer.innerHTML = '';
+    
+    // Generate last 28 days
+    const today = new Date();
+    const days = [];
+    for(let i=27; i>=0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        days.push(d);
+    }
+    
+    // Find all completion dates
+    const completedDates = new Set();
+    for(let i=0; i<localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if(key.startsWith('completion_date_')) {
+            completedDates.add(localStorage.getItem(key));
+        }
+    }
+    
+    days.forEach(d => {
+        const dateStr = d.toISOString().split('T')[0];
+        const isCompleted = completedDates.has(dateStr);
+        const dayEl = document.createElement('div');
+        dayEl.style.aspectRatio = '1';
+        dayEl.style.borderRadius = '4px';
+        dayEl.style.fontSize = '0.7rem';
+        dayEl.style.display = 'flex';
+        dayEl.style.alignItems = 'center';
+        dayEl.style.justifyContent = 'center';
+        dayEl.style.background = isCompleted ? 'var(--success)' : 'var(--border)';
+        dayEl.style.color = isCompleted ? 'white' : '#64748b';
+        dayEl.title = dateStr;
+        dayEl.textContent = d.getDate();
+        calContainer.appendChild(dayEl);
+    });
 }
 
 function showWeekDetail(week) {
@@ -442,10 +487,64 @@ function updateSet(uid, setIdx, field, value) {
         if (sets[setIdx]) {
             sets[setIdx][field] = value;
             localStorage.setItem(uid + '_sets', JSON.stringify(sets));
+            
+            // Check if day is complete and log date
+            checkAndLogDayCompletion(uid);
+            
             renderWorkout();
         }
     } catch (e) {
         alert("Error updating set: " + e.message);
+    }
+}
+
+function checkAndLogDayCompletion(uid) {
+    // Parse uid to get week and day
+    const parts = uid.split('-'); 
+    const w = parseInt(parts[0].substring(1));
+    const d = parseInt(parts[1].substring(1));
+    
+    // Check all exercises for this day
+    const dayWorkouts = workoutData.filter(i => i.w === w && i.d === d);
+    let allDone = true;
+    
+    for (const item of dayWorkouts) {
+        // Reconstruct uid for each item to check status
+        // We need the index logic again...
+         const dayIdx={};
+         // To properly reconstruct UIDs we need to iterate globally or just scan logic
+         // Simplified: Get all stored sets for this week/day combination
+         // This is getting complex to reconstruct UIDs on the fly.
+         // Better: Iterate all items for this day, generate their UIDs, check status.
+    }
+    
+    // Correct approach to check entire day completion:
+    // 1. Get all exercises for current w/d
+    // 2. For each, get sets from LS
+    // 3. Check if all sets are done
+    
+    // We need to know the index of each exercise to generate UID
+    // Let's filter workoutData to get exactly the items for this day in order
+    const dayItems = workoutData.filter(item => item.w === w && item.d === d);
+    
+    dayItems.forEach((item, index) => {
+        const itemUid = `w${w}-d${d}-i${index}`;
+        const sets = getSets(itemUid, item.defaultSets, item.defaultReps, item.defaultLoad);
+        const isItemDone = sets.every(s => s.done);
+        if (!isItemDone) allDone = false;
+    });
+
+    const completionKey = `completion_date_w${w}_d${d}`;
+    if (allDone) {
+        // Only set if not already set
+        if (!localStorage.getItem(completionKey)) {
+            const today = new Date().toISOString().split('T')[0];
+            localStorage.setItem(completionKey, today);
+        }
+    } else {
+        // If they uncheck something, remove the completion date?
+        // Usually safer to keep it or remove it. Let's remove it for accuracy.
+        localStorage.removeItem(completionKey);
     }
 }
 
@@ -475,7 +574,11 @@ function deleteSet(uid, setIdx) {
 }
 
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
-function getDayName(d){const names=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];return names[d-1]||"Day "+d;}
+function getDayName(d){
+    // Calculate total day number based on current week
+    const totalDay = ((currentWeek - 1) * 7) + d;
+    return "Day " + totalDay;
+}
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
 function jumpToToday(){calculateCurrentDay();renderWorkout();}
