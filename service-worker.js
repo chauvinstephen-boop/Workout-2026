@@ -1,9 +1,10 @@
-const CACHE_NAME = 'ruck-tracker-v1';
+const CACHE_NAME = 'ruck-tracker-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon.png',
+  '/icon-512.svg',
   'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 

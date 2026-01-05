@@ -54,6 +54,30 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 @media (max-width: 380px) {
     .summary-dashboard { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Rest Timer Styles */
+.rest-timer-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:500; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; }
+.rest-timer-display { font-size:5rem; font-weight:bold; font-family:monospace; margin-bottom:20px; }
+.rest-timer-label { font-size:1.2rem; margin-bottom:30px; opacity:0.8; }
+.rest-timer-buttons { display:flex; gap:15px; }
+.rest-timer-buttons button { padding:12px 24px; border:none; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; }
+
+/* Undo Toast */
+.undo-toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 20px; border-radius:8px; display:flex; align-items:center; gap:15px; z-index:300; box-shadow:0 4px 12px rgba(0,0,0,0.3); animation:slideUp 0.3s ease; }
+@keyframes slideUp { from { transform:translateX(-50%) translateY(20px); opacity:0; } to { transform:translateX(-50%) translateY(0); opacity:1; } }
+.undo-toast button { background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:600; }
+
+/* History View */
+.history-item { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px; }
+.history-date { font-weight:bold; color:var(--primary); margin-bottom:5px; }
+.history-exercise { font-size:0.9rem; color:var(--text); }
+
+/* Target info badge */
+.target-badge { font-size:0.75rem; color:#64748b; background:var(--bg); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:normal; }
+
+/* Keyboard shortcut hints */
+.kbd { background:#e2e8f0; border:1px solid #cbd5e1; border-radius:4px; padding:2px 6px; font-family:monospace; font-size:0.75rem; margin-left:5px; }
+body[data-theme="dark"] .kbd { background:#334155; border-color:#475569; }
 </style>
 </head>
 <body>
@@ -67,11 +91,38 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 
 <div id="view-home" class="view-container">
     <div class="home-grid">
-        <div class="home-btn" onclick="navigateTo('workout')">🏋️ Workout</div>
-        <div class="home-btn" onclick="navigateTo('analytics')">📊 Analytics</div>
-        <div class="home-btn" onclick="navigateTo('dashboard')">📈 Dashboard</div>
-        <div class="home-btn" onclick="navigateTo('settings')">⚙️ Settings</div>
+        <div class="home-btn" onclick="navigateTo('workout')" role="button" aria-label="Go to Workout view">🏋️ Workout</div>
+        <div class="home-btn" onclick="navigateTo('analytics')" role="button" aria-label="Go to Analytics view">📊 Analytics</div>
+        <div class="home-btn" onclick="navigateTo('dashboard')" role="button" aria-label="Go to Dashboard view">📈 Dashboard</div>
+        <div class="home-btn" onclick="navigateTo('history')" role="button" aria-label="Go to History view">📜 History</div>
+        <div class="home-btn" onclick="navigateTo('settings')" role="button" aria-label="Go to Settings view">⚙️ Settings</div>
     </div>
+    <div style="margin-top:20px;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
+        <div style="font-weight:bold;margin-bottom:8px;">⌨️ Keyboard Shortcuts</div>
+        <div style="font-size:0.85rem;color:var(--text);">
+            <div><span class="kbd">W</span> Workout <span class="kbd">A</span> Analytics <span class="kbd">D</span> Dashboard</div>
+            <div style="margin-top:4px;"><span class="kbd">H</span> History <span class="kbd">S</span> Settings <span class="kbd">T</span> Toggle Timer</div>
+            <div style="margin-top:4px;"><span class="kbd">←</span><span class="kbd">→</span> Prev/Next Day <span class="kbd">R</span> Start Rest Timer</div>
+        </div>
+    </div>
+</div>
+
+<!-- Rest Timer Overlay -->
+<div id="rest-timer-overlay" class="rest-timer-overlay" style="display:none;">
+    <div class="rest-timer-label">REST TIME</div>
+    <div id="rest-timer-display" class="rest-timer-display">01:30</div>
+    <div class="rest-timer-buttons">
+        <button onclick="adjustRestTime(-15)" style="background:#64748b;">-15s</button>
+        <button onclick="adjustRestTime(15)" style="background:#64748b;">+15s</button>
+        <button onclick="skipRest()" style="background:#ef4444;">Skip</button>
+    </div>
+    <div style="margin-top:20px;font-size:0.9rem;opacity:0.7;">Press SPACE or ESC to dismiss</div>
+</div>
+
+<!-- Undo Toast Container -->
+<div id="undo-toast" class="undo-toast" style="display:none;">
+    <span id="undo-message">Set deleted</span>
+    <button onclick="undoDelete()">Undo</button>
 </div>
 
 <div id="view-workout" class="view-container">
@@ -82,11 +133,19 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
     <div class="subtitle" id="current-date-display" style="text-align:center;margin-bottom:1rem;font-weight:600;color:var(--text);">Today</div>
     
     <!-- Timer Section -->
-    <div id="workout-timer" style="background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div id="timer-display" style="font-size:2rem; font-weight:700; font-family:monospace; color:var(--text); letter-spacing:1px;">00:00</div>
-        <div style="display:flex; gap:10px;">
-            <button id="timer-btn-toggle" onclick="toggleTimer()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Start</button>
-            <button onclick="resetTimer()" style="background:transparent; color:#64748b; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Reset</button>
+    <div id="workout-timer" style="background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div id="timer-display" style="font-size:2rem; font-weight:700; font-family:monospace; color:var(--text); letter-spacing:1px;" aria-live="polite" aria-label="Workout timer">00:00</div>
+            <div style="display:flex; gap:10px;">
+                <button id="timer-btn-toggle" onclick="toggleTimer()" aria-label="Start or pause workout timer" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Start</button>
+                <button onclick="resetTimer()" aria-label="Reset workout timer" style="background:transparent; color:#64748b; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition: background 0.2s;">Reset</button>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button onclick="startRestTimer(60)" aria-label="Start 1 minute rest timer" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">⏱️ 1:00 Rest</button>
+            <button onclick="startRestTimer(90)" aria-label="Start 90 second rest timer" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">⏱️ 1:30 Rest</button>
+            <button onclick="startRestTimer(120)" aria-label="Start 2 minute rest timer" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">⏱️ 2:00 Rest</button>
+            <button onclick="startRestTimer(180)" aria-label="Start 3 minute rest timer" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">⏱️ 3:00 Rest</button>
         </div>
     </div>
 
@@ -144,6 +203,17 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
         </div>
         <div id="nutrition-overview-content" style="display:none;padding:15px;"></div>
     </div>
+</div>
+
+<div id="view-history" class="view-container">
+    <h2>Workout History</h2>
+    <div style="margin-bottom:15px;">
+        <label style="font-size:0.9rem;color:#64748b;">Filter by exercise:</label>
+        <select id="history-filter" onchange="renderHistory()" style="width:100%;padding:10px;margin-top:5px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);">
+            <option value="all">All Exercises</option>
+        </select>
+    </div>
+    <div id="history-content"></div>
 </div>
 
 <div id="view-settings" class="view-container">
@@ -671,6 +741,8 @@ function navigateTo(view) {
         updateSummary();
     } else if (view === 'analytics') {
         renderAnalytics();
+    } else if (view === 'history') {
+        renderHistory();
     }
 }
 
@@ -1425,10 +1497,13 @@ function renderWorkout(){
             </div>`;
         });
         
-        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}</div></div></div>
+        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}<span class="target-badge">${ex.defaultSets}×${ex.defaultReps} @ ${ex.defaultLoad}</span></div></div></div>
         <div id="sets-${uid}">${setsHtml}</div>
-        <button onclick="addSet('${uid}')" style="background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;font-size:0.9rem;cursor:pointer;margin-bottom:10px;display:inline-block;">+ Add Set</button>
-        <div class="input-group"><input type="text" placeholder="Notes" value="${savedNote}" oninput="saveNote('${uid}',this.value)"></div>`;
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+            <button onclick="addSet('${uid}')" aria-label="Add another set" style="background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;font-size:0.9rem;cursor:pointer;">+ Add Set</button>
+            <button onclick="startRestTimer(90)" aria-label="Start rest timer" style="background:#10b981;color:white;border:none;padding:6px 12px;border-radius:4px;font-size:0.9rem;cursor:pointer;">⏱️ Rest</button>
+        </div>
+        <div class="input-group"><input type="text" placeholder="Notes" value="${savedNote}" oninput="saveNote('${uid}',this.value)" aria-label="Exercise notes"></div>`;
         container.appendChild(card);
     });
     updateSummary();
@@ -1530,16 +1605,69 @@ function addSet(uid) {
     }
 }
 
+// Undo functionality
+let lastDeletedSet = null;
+let undoTimeout = null;
+
 function deleteSet(uid, setIdx) {
     try {
         const sets = getCurrentSetsState(uid);
         if (setIdx >= 0 && setIdx < sets.length) {
+            // Store for undo
+            lastDeletedSet = {
+                uid: uid,
+                setIdx: setIdx,
+                setData: {...sets[setIdx]},
+                timestamp: Date.now()
+            };
+            
             sets.splice(setIdx, 1);
             localStorage.setItem(uid + '_sets', JSON.stringify(sets));
             renderWorkout();
+            
+            // Show undo toast
+            showUndoToast('Set deleted');
         }
     } catch (e) {
         alert("Error deleting set: " + e.message);
+    }
+}
+
+function showUndoToast(message) {
+    const toast = document.getElementById('undo-toast');
+    const msgEl = document.getElementById('undo-message');
+    if (toast && msgEl) {
+        msgEl.textContent = message;
+        toast.style.display = 'flex';
+        
+        // Clear existing timeout
+        if (undoTimeout) clearTimeout(undoTimeout);
+        
+        // Auto-hide after 5 seconds
+        undoTimeout = setTimeout(() => {
+            toast.style.display = 'none';
+            lastDeletedSet = null;
+        }, 5000);
+    }
+}
+
+function undoDelete() {
+    if (!lastDeletedSet) return;
+    
+    try {
+        const sets = getCurrentSetsState(lastDeletedSet.uid);
+        // Insert the set back at its original position
+        sets.splice(lastDeletedSet.setIdx, 0, lastDeletedSet.setData);
+        localStorage.setItem(lastDeletedSet.uid + '_sets', JSON.stringify(sets));
+        
+        // Hide toast and clear undo data
+        document.getElementById('undo-toast').style.display = 'none';
+        if (undoTimeout) clearTimeout(undoTimeout);
+        lastDeletedSet = null;
+        
+        renderWorkout();
+    } catch (e) {
+        alert("Error undoing: " + e.message);
     }
 }
 
@@ -1664,6 +1792,225 @@ function initTimerState() {
         updateTimerDisplay();
     }
 }
+
+// Rest Timer Logic
+let restTimeRemaining = 0;
+let restTimerInterval = null;
+
+function startRestTimer(seconds) {
+    restTimeRemaining = seconds;
+    const overlay = document.getElementById('rest-timer-overlay');
+    overlay.style.display = 'flex';
+    updateRestTimerDisplay();
+    
+    if (restTimerInterval) clearInterval(restTimerInterval);
+    restTimerInterval = setInterval(() => {
+        restTimeRemaining--;
+        updateRestTimerDisplay();
+        
+        if (restTimeRemaining <= 0) {
+            endRestTimer(true);
+        }
+    }, 1000);
+}
+
+function updateRestTimerDisplay() {
+    const display = document.getElementById('rest-timer-display');
+    if (display) {
+        const mins = Math.floor(restTimeRemaining / 60);
+        const secs = restTimeRemaining % 60;
+        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+}
+
+function adjustRestTime(delta) {
+    restTimeRemaining = Math.max(0, restTimeRemaining + delta);
+    updateRestTimerDisplay();
+}
+
+function skipRest() {
+    endRestTimer(false);
+}
+
+function endRestTimer(playSound) {
+    if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+    }
+    document.getElementById('rest-timer-overlay').style.display = 'none';
+    
+    if (playSound) {
+        // Play sound and vibrate
+        playTimerAlert();
+    }
+}
+
+function playTimerAlert() {
+    // Vibrate if supported
+    if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+    }
+    
+    // Play beep sound using Web Audio API
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        
+        // Beep pattern: 3 short beeps
+        setTimeout(() => { gainNode.gain.value = 0; }, 150);
+        setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
+        setTimeout(() => { gainNode.gain.value = 0; }, 400);
+        setTimeout(() => { gainNode.gain.value = 0.3; }, 500);
+        setTimeout(() => { gainNode.gain.value = 0; }, 650);
+        setTimeout(() => { oscillator.stop(); audioCtx.close(); }, 700);
+    } catch (e) {
+        console.log('Audio not supported');
+    }
+}
+
+// History View
+function renderHistory() {
+    const container = document.getElementById('history-content');
+    const filterSelect = document.getElementById('history-filter');
+    const filterValue = filterSelect.value;
+    
+    // Build unique exercise list for filter dropdown
+    const exercises = [...new Set(workoutData.map(item => item.ex))].sort();
+    
+    // Update filter options if not already populated
+    if (filterSelect.options.length <= 1) {
+        exercises.forEach(ex => {
+            const opt = document.createElement('option');
+            opt.value = ex;
+            opt.textContent = ex;
+            filterSelect.appendChild(opt);
+        });
+    }
+    
+    // Gather completed workout data
+    const historyData = [];
+    
+    workoutData.forEach((item, idx) => {
+        const dayItems = workoutData.filter(i => i.w === item.w && i.d === item.d);
+        const itemIdx = dayItems.indexOf(item);
+        const uid = `w${item.w}-d${item.d}-i${itemIdx}`;
+        
+        const savedSets = localStorage.getItem(uid + '_sets');
+        if (savedSets) {
+            const sets = JSON.parse(savedSets);
+            const completedSets = sets.filter(s => s.done);
+            if (completedSets.length > 0 && (filterValue === 'all' || item.ex === filterValue)) {
+                historyData.push({
+                    week: item.w,
+                    day: item.d,
+                    exercise: item.ex,
+                    focus: item.focus,
+                    sets: completedSets,
+                    uid: uid
+                });
+            }
+        }
+    });
+    
+    // Sort by week/day (most recent first)
+    historyData.sort((a, b) => {
+        if (a.week !== b.week) return b.week - a.week;
+        return b.day - a.day;
+    });
+    
+    if (historyData.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#64748b;padding:40px;">No completed workouts yet. Start logging your sets!</div>';
+        return;
+    }
+    
+    let html = '';
+    let currentWeekDay = '';
+    
+    historyData.forEach(item => {
+        const weekDayKey = `W${item.week}D${item.day}`;
+        if (weekDayKey !== currentWeekDay) {
+            currentWeekDay = weekDayKey;
+            const dayName = getDayName(item.day);
+            html += `<div style="font-weight:bold;color:var(--primary);margin-top:15px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);">Week ${item.week} - ${dayName}</div>`;
+        }
+        
+        const setsStr = item.sets.map((s, i) => `Set ${i+1}: ${s.reps} × ${s.load}`).join('<br>');
+        html += `<div class="history-item">
+            <div class="history-date">${item.exercise}</div>
+            <div class="history-exercise">${setsStr}</div>
+        </div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Keyboard Shortcuts
+document.addEventListener('keydown', function(e) {
+    // Don't trigger shortcuts when typing in inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+    
+    // Rest timer overlay handling
+    if (document.getElementById('rest-timer-overlay').style.display !== 'none') {
+        if (e.key === 'Escape' || e.key === ' ') {
+            e.preventDefault();
+            skipRest();
+        }
+        return;
+    }
+    
+    switch(e.key.toLowerCase()) {
+        case 'w':
+            navigateTo('workout');
+            break;
+        case 'a':
+            navigateTo('analytics');
+            break;
+        case 'd':
+            navigateTo('dashboard');
+            break;
+        case 'h':
+            navigateTo('history');
+            break;
+        case 's':
+            navigateTo('settings');
+            break;
+        case 't':
+            if (document.getElementById('view-workout').classList.contains('active')) {
+                toggleTimer();
+            }
+            break;
+        case 'r':
+            if (document.getElementById('view-workout').classList.contains('active')) {
+                startRestTimer(90);
+            }
+            break;
+        case 'arrowleft':
+            if (document.getElementById('view-workout').classList.contains('active')) {
+                changeDay(-1);
+            }
+            break;
+        case 'arrowright':
+            if (document.getElementById('view-workout').classList.contains('active')) {
+                changeDay(1);
+            }
+            break;
+        case 'escape':
+            navigateTo('home');
+            break;
+    }
+});
 
 window.onload=function(){
     // ... existing onload code ...
