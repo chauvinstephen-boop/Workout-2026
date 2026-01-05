@@ -168,73 +168,417 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 // Full workoutData array (all 8 weeks)
 const workoutData = [];
 (function generate() {
-    const upper = [
-        {ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb"},
-        {ex:"Pull-ups",set:"4",rep:"4–8",load:"BW"},
-        {ex:"BB Row",set:"4",rep:"6–8",load:"Moderate"},
-        {ex:"OHP",set:"3",rep:"6–8",load:"95 lb"}
+    const postureCore1 = [
+        {ex:"Band pull‑aparts", set:3, rep:"15–20", load:"Band", note:"Posture/core finisher"},
+        {ex:"Wall slides", set:3, rep:"10–12", load:"BW"},
+        {ex:"Bird‑dog", set:3, rep:"8/side", load:"BW"},
+        {ex:"Dead bug", set:3, rep:"8/side", load:"BW"}
     ];
-    const lower = [
-        {ex:"Back Squat",set:"3",rep:"5",load:"225 lb"},
-        {ex:"Deadlift",set:"3",rep:"3",load:"315 lb"},
-        {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
-        {ex:"Plank",set:"3",rep:"60s",load:"BW"}
+    const postureThu = [
+        {ex:"Band pull‑aparts", set:3, rep:"15–20", load:"Band", note:"Posture"},
+        {ex:"Wall slides", set:3, rep:"10–12", load:"BW"}
     ];
-// Ruck Shuffle logic needs to be distinct or merged. Let's keep it as is but maybe add note?
-    const cond = [
-        {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
-        {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
-        {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
-        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb", defaultNote: "Fast shuffle. Get heart rate up."}
+    const coreSat = [
+        {ex:"Bird‑dog", set:3, rep:"8/side", load:"BW"},
+        {ex:"Dead bug", set:3, rep:"8/side", load:"BW"}
+    ];
+    const recoverySun = [
+        {ex:"Easy walk", set:1, rep:"20–40 min", load:"-"},
+        {ex:"Stretching", set:1, rep:"10–15 min", load:"-", note:"Hip flexors, hamstrings, calves, chest"}
+    ];
+    
+    // Week 1
+    const w1 = [
+        {d:1, focus:"Upper Strength + Posture", ex:[
+            {ex:"Bench press", set:4, rep:"5–8", load:"180 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–8", load:"BW", note:"Band-assist if needed"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"Moderate", note:"Strict form"},
+            {ex:"Standing OHP", set:3, rep:"6–8", load:"95 lb"},
+            {ex:"Triceps pushdown", set:3, rep:"10–12", load:"-"},
+            {ex:"DB curls", set:3, rep:"10–12", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (short)", ex:[
+            {ex:"Ruck March", set:1, rep:"3 miles", load:"25 lb", note:"Pace: 15:45–16:30/mi (easy–moderate; focus on posture)"}
+        ]},
+        {d:3, focus:"Lower Strength (S1‑friendly) + Core", ex:[
+            {ex:"Front squat", set:4, rep:"5–8", load:"~175 lb", note:"Light–moderate"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"5–6", load:"235 lb", note:"Submaximal, perfect form"},
+            {ex:"Reverse lunges (DBs)", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust/glute bridge", set:3, rep:"10–12", load:"-"},
+            {ex:"Standing calf raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Planks", set:3, rep:"20–30s", load:"BW", note:"Core/posture"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy + Posture", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long)", ex:[
+            {ex:"Ruck March", set:1, rep:"5 miles", load:"25 lb", note:"Pace: 15:45–16:30/mi (steady, nasal breathing)"}
+        ]},
+        {d:6, focus:"Full Body + Optional Easy Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"5–6", load:"235 lb"},
+            {ex:"Front/goblet squat", set:3, rep:"8–10", load:"Moderate"},
+            {ex:"Pull‑ups/chin‑ups", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+            {ex:"KB swings", set:2, rep:"12–15", load:"-", note:"If tolerated"},
+            ...coreSat,
+            {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:30–17:30/mi (very easy)"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
     ];
 
-    for(let w=1; w<=8; w++) {
-        // NFM Pacing Logic: 
-        // Goal: 18.6 miles (30km) in 4h 30m = ~14:30 min/mile pace with 25lb pack.
-        // Progression: Start slower/lighter, build speed/distance.
-        
-        // Pacing guidelines for 35yo male targeting NFM pass
-        let shortPace = "16:00-17:00 min/mi"; // Base building
-        let longPace = "17:00-18:00 min/mi"; // Endurance
-        let loadNote = "25-30lb";
-        
-        if (w >= 3 && w <= 5) {
-            shortPace = "15:00-16:00 min/mi";
-            longPace = "16:30-17:30 min/mi";
-            loadNote = "30-35lb";
-        } else if (w >= 6) {
-            shortPace = "14:30-15:00 min/mi"; // Race pace practice
-            longPace = "15:30-16:30 min/mi";
-            loadNote = "35-40lb (Train heavy)";
-        }
+    // Week 2
+    const w2 = [
+        {d:1, focus:"Upper Strength + Posture", ex:[
+            {ex:"Bench press", set:4, rep:"5–8", load:"185 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–8", load:"BW"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"6–8", load:"100 lb"},
+            {ex:"Triceps pushdown", set:3, rep:"10–12", load:"-"},
+            {ex:"DB curls", set:3, rep:"10–12", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (short)", ex:[
+            {ex:"Ruck March", set:1, rep:"3.5 miles", load:"25 lb", note:"Pace: 15:30–16:15/mi"}
+        ]},
+        {d:3, focus:"Lower Strength", ex:[
+            {ex:"Front squat", set:4, rep:"5–8", load:"~180 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"5–6", load:"240 lb"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"10–12", load:"-"},
+            {ex:"Calf raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy + Posture", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-", note:"Nudge loads up"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long)", ex:[
+             {ex:"Ruck March", set:1, rep:"6 miles", load:"25 lb", note:"Pace: 15:30–16:15/mi"}
+        ]},
+        {d:6, focus:"Full Body + Optional Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"5–6", load:"240 lb"},
+            {ex:"Front/goblet squat", set:3, rep:"8–10", load:"-"},
+            {ex:"Pull‑ups/chins", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+            {ex:"KB swings", set:2, rep:"12–15", load:"-"},
+            ...coreSat,
+             {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:30–17:30/mi"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
+    ];
 
-        // Day 1: Upper
-        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
-        
-        // Day 2: Short Ruck (Speed/Tempo)
-        workoutData.push({w, d:2, focus:"Ruck (Tempo)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: loadNote, defaultNote: `Target Pace: ${shortPace}. Focus on turnover and efficient stride. NFM Goal: Maintain sub-15:00 pace.`});
-        
-        // Day 3: Lower
-        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
-        
-        // Day 4: Base Ruck (Recovery/Base)
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "25-30lb", defaultNote: "Pace: Comfortable aerobic zone (17:00-19:00/mi). Focus on posture and breathing."});
-        
-        // Day 5: Conditioning
-        cond.forEach(c => {
-             // Handle defaultNote for conditioning items specifically
-             const note = c.defaultNote || "";
-             workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load, defaultNote: note});
+    // Week 3
+    const w3 = [
+        {d:1, focus:"Upper Strength", ex:[
+            {ex:"Bench press", set:4, rep:"5–8", load:"190 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–8", load:"BW"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"6–8", load:"100–105 lb"},
+            {ex:"Triceps pushdown", set:3, rep:"10–12", load:"-"},
+            {ex:"DB curls", set:3, rep:"10–12", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (short/pace work)", ex:[
+            {ex:"Ruck March", set:1, rep:"5 miles", load:"25 lb", note:"Pace: 15:00–15:45/mi (Intervals: 5x6min @ 14:30-15:00)"}
+        ]},
+        {d:3, focus:"Lower Strength", ex:[
+            {ex:"Front squat", set:4, rep:"5–8", load:"~185 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"5–6", load:"250 lb"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"10–12", load:"-"},
+            {ex:"Calf raises", set:3, rep:"12–15", load:"-"},
+             {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-", note:"Slightly heavier"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long)", ex:[
+             {ex:"Ruck March", set:1, rep:"7 miles", load:"25 lb", note:"Pace: 15:00–15:45/mi"}
+        ]},
+        {d:6, focus:"Full Body + Optional Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"5–6", load:"250 lb"},
+            {ex:"Front/goblet squat", set:3, rep:"8–10", load:"-"},
+            {ex:"Pull‑ups", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+            {ex:"KB swings", set:2, rep:"12–15", load:"-"},
+            ...coreSat,
+             {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:00–17:00/mi if fresh"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
+    ];
+
+    // Week 4
+    const w4 = [
+        {d:1, focus:"Upper Strength", ex:[
+            {ex:"Bench press", set:4, rep:"5–8", load:"200 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–8", load:"BW"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"6–8", load:"105 lb"},
+            {ex:"Triceps pushdown", set:3, rep:"10–12", load:"-"},
+            {ex:"DB curls", set:3, rep:"10–12", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (short)", ex:[
+            {ex:"Ruck March", set:1, rep:"5–6 miles", load:"25 lb", note:"Pace: 14:45–15:30/mi"}
+        ]},
+        {d:3, focus:"Lower Strength", ex:[
+            {ex:"Front squat", set:4, rep:"5–8", load:"~190–195 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"5–6", load:"255–260 lb"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"10–12", load:"-"},
+            {ex:"Calf raises", set:3, rep:"12–15", load:"-"},
+             {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-", note:"1-2 reps shy of failure"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long, big jump)", ex:[
+             {ex:"Ruck March", set:1, rep:"8–9 miles", load:"25 lb", note:"Pace: 14:45–15:30/mi"}
+        ]},
+        {d:6, focus:"Full Body + Optional Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"5–6", load:"255–260 lb"},
+            {ex:"Front/goblet squat", set:3, rep:"8–10", load:"-"},
+            {ex:"Pull‑ups", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+            {ex:"KB swings", set:2, rep:"12–15", load:"-"},
+            ...coreSat,
+             {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:00–17:00/mi"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
+    ];
+
+    // Week 5
+    const w5 = [
+        {d:1, focus:"Upper Strength (heavier)", ex:[
+            {ex:"Bench press", set:4, rep:"4–6", load:"200 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–6", load:"Weighted?", note:"Weighted if possible"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"5–7", load:"105 lb"},
+            {ex:"Close‑grip bench/dips", set:3, rep:"6–8", load:"-"},
+            {ex:"EZ/BB curls", set:3, rep:"8–10", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (threshold)", ex:[
+            {ex:"Ruck March", set:1, rep:"5 miles", load:"25 lb", note:"Pace: 14:30–15:00/mi (controlled)"}
+        ]},
+        {d:3, focus:"Lower Strength (heavier)", ex:[
+            {ex:"Front squat", set:4, rep:"4–6", load:"~195 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"4–6", load:"255–260 lb"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"8–10", load:"-"},
+            {ex:"Calf raises", set:3, rep:"10–12", load:"-"},
+             {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long)", ex:[
+             {ex:"Ruck March", set:1, rep:"9–10 miles", load:"25 lb", note:"Pace: 14:45–15:15/mi"}
+        ]},
+        {d:6, focus:"Full Body + Easy Ruck (optional)", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"4–6", load:"255–260 lb"},
+            {ex:"Front squat", set:3, rep:"6–8", load:"~185–190 lb"},
+            {ex:"Pull‑ups", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+            {ex:"KB swings", set:2, rep:"12–15", load:"-"},
+            ...coreSat,
+             {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:00–17:00/mi"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
+    ];
+
+    // Week 6
+    const w6 = [
+        {d:1, focus:"Upper Strength", ex:[
+            {ex:"Bench press", set:4, rep:"4–6", load:"205 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–6", load:"Weighted?", note:"Weighted if able"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"5–7", load:"110 lb"},
+            {ex:"Close‑grip bench/dips", set:3, rep:"6–8", load:"-"},
+            {ex:"EZ/BB curls", set:3, rep:"8–10", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (threshold)", ex:[
+            {ex:"Ruck March", set:1, rep:"5–6 miles", load:"25 lb", note:"Pace: 14:30–15:00/mi (steady)"}
+        ]},
+        {d:3, focus:"Lower Strength", ex:[
+            {ex:"Front squat", set:4, rep:"4–6", load:"~200 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"4–6", load:"270 lb", note:"If back feels good, else lighter"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"8–10", load:"-"},
+            {ex:"Calf raises", set:3, rep:"10–12", load:"-"},
+             {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Ruck (long rehearsal)", ex:[
+             {ex:"Ruck March", set:1, rep:"10–12 miles", load:"25 lb", note:"Pace: 14:45–15:15/mi"}
+        ]},
+        {d:6, focus:"Full Body (lighter) + Optional Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"4–6", load:"~260 lb"},
+            {ex:"Front squat", set:3, rep:"6–8", load:"~185–190 lb"},
+            {ex:"Pull‑ups", set:3, rep:"6–10", load:"BW"},
+            {ex:"DB bench", set:3, rep:"8–10", load:"-"},
+             {ex:"Core/light accessories", set:1, rep:"-", load:"-"},
+             {ex:"Optional Ruck", set:1, rep:"1–2 miles", load:"25 lb", note:"Pace: 16:00–17:00/mi (very easy)"}
+        ]},
+        {d:7, focus:"Recovery", ex: recoverySun}
+    ];
+
+    // Week 7
+    const w7 = [
+        {d:1, focus:"Upper Strength", ex:[
+            {ex:"Bench press", set:4, rep:"4–6", load:"210 lb"},
+            {ex:"Pull‑ups", set:4, rep:"4–6", load:"Weighted"},
+            {ex:"Barbell row", set:4, rep:"6–8", load:"-"},
+            {ex:"OHP", set:3, rep:"4–6", load:"110–115 lb", note:"Only with pristine form"},
+            {ex:"Close‑grip bench/dips", set:3, rep:"6–8", load:"-"},
+            {ex:"EZ/BB curls", set:3, rep:"8–10", load:"-"},
+            ...postureCore1
+        ]},
+        {d:2, focus:"Ruck (pace)", ex:[
+            {ex:"Ruck March", set:1, rep:"6 miles", load:"25 lb", note:"Pace: 14:15–14:45/mi (slightly faster than goal)"}
+        ]},
+        {d:3, focus:"Lower Strength", ex:[
+            {ex:"Front squat", set:4, rep:"4–6", load:"~205 lb"},
+            {ex:"Trap‑bar deadlift", set:3, rep:"4–6", load:"~270 lb", note:"Or stay at W6 load"},
+            {ex:"Reverse lunges", set:3, rep:"8/leg", load:"-"},
+            {ex:"Hip thrust", set:3, rep:"8–10", load:"-"},
+            {ex:"Calf raises", set:3, rep:"10–12", load:"-"},
+             {ex:"Planks", set:3, rep:"20–30s", load:"BW"},
+            {ex:"Side planks", set:2, rep:"20s/side", load:"BW"},
+            {ex:"Chest stretch", set:2, rep:"30s/side", load:"-"}
+        ]},
+        {d:4, focus:"Upper Hypertrophy (moderate)", ex:[
+            {ex:"Incline DB bench", set:3, rep:"8–12", load:"-", note:"Keep volume, avoid failure"},
+            {ex:"1‑arm DB row", set:3, rep:"8–12/side", load:"-"},
+            {ex:"DB shoulder press", set:3, rep:"8–12", load:"-"},
+            {ex:"Lateral raises", set:3, rep:"12–15", load:"-"},
+            {ex:"Face pulls", set:3, rep:"12–15", load:"-"},
+            {ex:"Hammer curls", set:2, rep:"10–12", load:"-"},
+            ...postureThu
+        ]},
+        {d:5, focus:"Long Ruck Peak", ex:[
+             {ex:"Ruck March", set:1, rep:"14–15 miles", load:"25 lb", note:"Pace: 14:45–15:15/mi. Simulate event nutrition."}
+        ]},
+        {d:6, focus:"Full Body (very moderate) + No or Tiny Ruck", ex:[
+            {ex:"Trap‑bar DL", set:3, rep:"3–5", load:"~260–270 lb"},
+            {ex:"Front squat", set:3, rep:"6", load:"~185 lb"},
+            {ex:"Pull‑ups", set:2, rep:"6–8", load:"BW"},
+            {ex:"Light DB bench", set:2, rep:"8–10", load:"-"},
+             ...coreSat,
+             {ex:"Optional Ruck", set:1, rep:"0–1 mile", load:"25 lb", note:"Easy, for stiffness only"}
+        ]},
+        {d:7, focus:"Recovery", ex: [
+             {ex:"Extra mobility", set:1, rep:"30 min", load:"-"},
+             {ex:"Sleep", set:1, rep:"8+ hrs", load:"-"}
+        ]}
+    ];
+
+    // Week 8
+    const w8 = [
+        {d:1, focus:"Upper Deload", ex:[
+            {ex:"Bench press", set:3, rep:"5", load:"175 lb"},
+            {ex:"Pull‑ups", set:3, rep:"Easy sets", load:"BW", note:"Stop before failure"},
+            {ex:"OHP", set:2, rep:"6", load:"85–95 lb"},
+            {ex:"Very light rows/triceps/curls", set:2, rep:"10–12", load:"Light"},
+            {ex:"Posture set", set:1, rep:"5-10 min", load:"-", note:"Pull-aparts, wall slides"}
+        ]},
+        {d:2, focus:"Ruck (light)", ex:[
+            {ex:"Ruck March", set:1, rep:"4–5 miles", load:"25 lb", note:"Pace: 15:00–15:45/mi (smooth & relaxed)"}
+        ]},
+        {d:3, focus:"Lower Deload", ex:[
+            {ex:"Front squat", set:3, rep:"5", load:"~165–175 lb"},
+            {ex:"Trap‑bar deadlift", set:2, rep:"4–5", load:"~225–235 lb"},
+            {ex:"Light reverse lunges", set:2, rep:"8/leg", load:"Light"},
+            {ex:"Calf raises", set:2, rep:"10–12", load:"-"},
+             ...coreSat
+        ]},
+        {d:4, focus:"Upper Light", ex:[
+             {ex:"Upper Accessories", set:2, rep:"8–12", load:"Easy", note:"No strain"},
+             {ex:"Posture work", set:1, rep:"5-10 min", load:"-"}
+        ]},
+        {d:5, focus:"Ruck (final tune‑up)", ex:[
+             {ex:"Ruck March", set:1, rep:"6–8 miles", load:"25 lb", note:"Pace: 15:00–15:45/mi"}
+        ]},
+        {d:6, focus:"Rest / very light", ex:[
+            {ex:"Easy walk", set:1, rep:"20 min", load:"-"},
+            {ex:"Stretching", set:1, rep:"10 min", load:"-"}
+        ]},
+        {d:7, focus:"Event Week Prep", ex: [
+             {ex:"Short easy walk", set:2, rep:"20–30 min", load:"-"},
+             {ex:"Posture/core", set:1, rep:"10 min", load:"-"},
+             {ex:"Rest", set:1, rep:"-", load:"-", note:"Sleep, hydrate, carbs"}
+        ]}
+    ];
+
+    // Push all to workoutData
+    [w1, w2, w3, w4, w5, w6, w7, w8].forEach((weekData, index) => {
+        const w = index + 1;
+        weekData.forEach(day => {
+            day.ex.forEach(exercise => {
+                 workoutData.push({
+                     w,
+                     d: day.d,
+                     focus: day.focus,
+                     ex: exercise.ex,
+                     defaultSets: exercise.set,
+                     defaultReps: String(exercise.rep),
+                     defaultLoad: exercise.load,
+                     defaultNote: exercise.note || ""
+                 });
+            });
         });
-        
-        // Day 6: Long Ruck (Endurance)
-        const longDist = w === 8 ? "18.6 miles (NFM Test)" : `${6 + w} miles`;
-        const longNote = w === 8 ? "Race Day! Target 4h 30m total time." : `Target Pace: ${longPace}. Build mental endurance. Hydrate every hour.`;
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: longDist, defaultLoad: loadNote, defaultNote: longNote});
-        
-        // Day 7: Rest
-        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
-    }
+    });
 })();
 
 // Helper to find exercise data from UID
@@ -339,8 +683,17 @@ function renderAnalytics() {
     });
     
     // Create canvas elements
-    const lifts = ['Bench Press', 'Back Squat', 'Deadlift', 'OHP'];
+    const lifts = ['Bench Press', 'Front Squat', 'Trap-Bar DL', 'OHP'];
     
+    function getCanonicalLift(exName) {
+        const lower = exName.toLowerCase();
+        if (lower.includes('bench press') && !lower.includes('close')) return 'Bench Press'; // Exclude close-grip
+        if (lower.includes('front') && (lower.includes('squat') || lower.includes('sq'))) return 'Front Squat';
+        if (lower.includes('trap') && (lower.includes('deadlift') || lower.includes('dl'))) return 'Trap-Bar DL';
+        if ((lower.includes('ohp') || lower.includes('shoulder press')) && !lower.includes('db')) return 'OHP'; 
+        return null;
+    }
+
     // Container for lift charts
     const liftsContainer = document.createElement('div');
     liftsContainer.className = 'charts-grid';
@@ -390,8 +743,6 @@ function renderAnalytics() {
     }
     
     // Gather Data
-    // We want to track progress over time. Let's group by Week.
-    // Structure: { Week1: {Bench: 180, Squat: 225...}, Week2: ... }
     const weeklyMaxes = {};
     const currentMaxes = {}; // Latest best
     const weeklyRuck = {}; // { Week1: 5, Week2: 6... }
@@ -412,35 +763,36 @@ function renderAnalytics() {
         const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
         
         // Rucking Logic
-        if (item.ex === "Ruck March" && item.focus.includes("Ruck")) {
+        if (item.ex === "Ruck March" && (item.focus.toLowerCase().includes("ruck") || item.ex === "Ruck March")) {
             // Check if done
             const isDone = sets.every(s => s.done);
             if (isDone) {
                // Try to parse miles from reps (e.g., "3 miles")
-               // Default reps is string like "3 miles" or "3 + (w-1)..."
-               // We need the ACTUAL saved value if edited, or default.
-               // sets[0].reps should have it.
                const repStr = sets[0].reps.toLowerCase();
-               const miles = parseFloat(repStr);
-               if (!isNaN(miles)) {
-                   weeklyRuck[item.w] += miles;
+               const match = repStr.match(/(\d+(\.\d+)?)/);
+               if (match) {
+                   const miles = parseFloat(match[1]);
+                   if (!isNaN(miles)) {
+                       weeklyRuck[item.w] += miles;
+                   }
                }
             }
         }
         
         // Lift Logic
-        if (lifts.includes(item.ex)) {
+        const canonical = getCanonicalLift(item.ex);
+        if (canonical) {
             sets.forEach(s => {
                 if (s.done) {
                     const load = parseFloat(s.load);
                     const reps = parseFloat(s.reps);
                     if (!isNaN(load) && !isNaN(reps) && reps > 0) {
                         const e1rm = load * (1 + reps/30);
-                        if (e1rm > weeklyMaxes[item.w][item.ex]) {
-                            weeklyMaxes[item.w][item.ex] = e1rm;
+                        if (e1rm > weeklyMaxes[item.w][canonical]) {
+                            weeklyMaxes[item.w][canonical] = e1rm;
                         }
-                        if (e1rm > currentMaxes[item.ex]) {
-                            currentMaxes[item.ex] = e1rm;
+                        if (e1rm > currentMaxes[canonical]) {
+                            currentMaxes[canonical] = e1rm;
                         }
                     }
                 }
@@ -459,16 +811,16 @@ function renderAnalytics() {
             // Female Standards (approx multipliers)
             standards = {
                 'Bench Press': { beg: 0.5, int: 0.75, adv: 1.0 },
-                'Back Squat': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
+                'Front Squat': { beg: 0.5, int: 0.85, adv: 1.15 },
+                'Trap-Bar DL': { beg: 1.0, int: 1.25, adv: 1.75 },
                 'OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
             };
         } else {
             // Male Standards
             standards = {
                 'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
-                'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+                'Front Squat': { beg: 0.75, int: 1.15, adv: 1.5 },
+                'Trap-Bar DL': { beg: 1.25, int: 1.75, adv: 2.25 },
                 'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
             };
         }
@@ -1259,7 +1611,6 @@ function initTimerState() {
 }
 
 window.onload=function(){
-    // ... existing onload code ...
     // Call initTimerState() at end
 
     const savedStart=localStorage.getItem('ruckStartDate');
