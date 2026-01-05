@@ -165,77 +165,422 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 </div>
 
 <script>
-// Full workoutData array (all 8 weeks)
-const workoutData = [];
-(function generate() {
-    const upper = [
-        {ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb"},
-        {ex:"Pull-ups",set:"4",rep:"4–8",load:"BW"},
-        {ex:"BB Row",set:"4",rep:"6–8",load:"Moderate"},
-        {ex:"OHP",set:"3",rep:"6–8",load:"95 lb"}
-    ];
-    const lower = [
-        {ex:"Back Squat",set:"3",rep:"5",load:"225 lb"},
-        {ex:"Deadlift",set:"3",rep:"3",load:"315 lb"},
-        {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
-        {ex:"Plank",set:"3",rep:"60s",load:"BW"}
-    ];
-// Ruck Shuffle logic needs to be distinct or merged. Let's keep it as is but maybe add note?
-    const cond = [
-        {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
-        {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
-        {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
-        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb", defaultNote: "Fast shuffle. Get heart rate up."}
-    ];
-
-    for(let w=1; w<=8; w++) {
-        // NFM Pacing Logic: 
-        // Goal: 18.6 miles (30km) in 4h 30m = ~14:30 min/mile pace with 25lb pack.
-        // Progression: Start slower/lighter, build speed/distance.
-        
-        // Pacing guidelines for 35yo male targeting NFM pass
-        let shortPace = "16:00-17:00 min/mi"; // Base building
-        let longPace = "17:00-18:00 min/mi"; // Endurance
-        let loadNote = "25-30lb";
-        
-        if (w >= 3 && w <= 5) {
-            shortPace = "15:00-16:00 min/mi";
-            longPace = "16:30-17:30 min/mi";
-            loadNote = "30-35lb";
-        } else if (w >= 6) {
-            shortPace = "14:30-15:00 min/mi"; // Race pace practice
-            longPace = "15:30-16:30 min/mi";
-            loadNote = "35-40lb (Train heavy)";
-        }
-
-        // Day 1: Upper
-        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
-        
-        // Day 2: Short Ruck (Speed/Tempo)
-        workoutData.push({w, d:2, focus:"Ruck (Tempo)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: loadNote, defaultNote: `Target Pace: ${shortPace}. Focus on turnover and efficient stride. NFM Goal: Maintain sub-15:00 pace.`});
-        
-        // Day 3: Lower
-        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
-        
-        // Day 4: Base Ruck (Recovery/Base)
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "25-30lb", defaultNote: "Pace: Comfortable aerobic zone (17:00-19:00/mi). Focus on posture and breathing."});
-        
-        // Day 5: Conditioning
-        cond.forEach(c => {
-             // Handle defaultNote for conditioning items specifically
-             const note = c.defaultNote || "";
-             workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load, defaultNote: note});
-        });
-        
-        // Day 6: Long Ruck (Endurance)
-        const longDist = w === 8 ? "18.6 miles (NFM Test)" : `${6 + w} miles`;
-        const longNote = w === 8 ? "Race Day! Target 4h 30m total time." : `Target Pace: ${longPace}. Build mental endurance. Hydrate every hour.`;
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: longDist, defaultLoad: loadNote, defaultNote: longNote});
-        
-        // Day 7: Rest
-        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
-    }
-})();
+// Full workoutData array (all 8 weeks) - Detailed Ruck & Strength Program
+const workoutData = [
+    // ===== WEEK 1 =====
+    // Monday - Upper Strength + Posture
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Bench Press", defaultSets:4, defaultReps:"5-8", defaultLoad:"180 lb"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Pull-ups", defaultSets:4, defaultReps:"4-8", defaultLoad:"BW", defaultNote:"Band-assist if needed"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate", defaultNote:"Strict form"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Standing OHP", defaultSets:3, defaultReps:"6-8", defaultLoad:"95 lb"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Triceps Pushdown", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"DB Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core finisher"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:1, d:1, focus:"Upper Strength + Posture", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    
+    // Tuesday - Ruck (short)
+    {w:1, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"3 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:45-16:30 per mile (easy-moderate; focus on posture)"},
+    
+    // Wednesday - Lower Strength (S1-friendly) + Core
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~175 lb", defaultNote:"Light-moderate"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb", defaultNote:"Submaximal, perfect form"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"Or glute bridge"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-", defaultNote:"Core/posture"},
+    
+    // Thursday - Upper Hypertrophy + Posture
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"DB Shoulder Press", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:1, d:4, focus:"Upper Hypertrophy + Posture", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long)
+    {w:1, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:45-16:30 per mile (steady, nasal breathing if possible)"},
+    
+    // Saturday - Full Body + Optional Easy Ruck
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups/Chin-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"If tolerated, 2-3 sets"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 16:30-17:30 per mile (very easy)"},
+    
+    // Sunday - Recovery
+    {w:1, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-"},
+    {w:1, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 2 =====
+    // Monday - Upper Strength + Posture
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Bench Press", defaultSets:4, defaultReps:"5-8", defaultLoad:"185 lb"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Pull-ups", defaultSets:4, defaultReps:"4-8", defaultLoad:"BW"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Standing OHP", defaultSets:3, defaultReps:"6-8", defaultLoad:"100 lb"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Triceps Pushdown", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"DB Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core finisher (same as Week 1)"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:2, d:1, focus:"Upper Strength + Posture", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    
+    // Tuesday - Ruck (short)
+    {w:2, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"3.5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:30-16:15 per mile"},
+    
+    // Wednesday - Lower Strength
+    {w:2, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~180 lb"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture (same as Week 1)"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy + Posture
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"Nudge DB loads up if all sets were easy"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"DB Shoulder Press", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:2, d:4, focus:"Upper Hypertrophy + Posture", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long)
+    {w:2, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:30-16:15 per mile"},
+    
+    // Saturday - Full Body + Optional Ruck
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups/Chin-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture (same as Week 1)"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 16:30-17:30 per mile"},
+    
+    // Sunday - Recovery
+    {w:2, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-", defaultNote:"Same as Week 1"},
+    {w:2, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 3 =====
+    // Monday - Upper Strength
+    {w:3, d:1, focus:"Upper Strength", ex:"Bench Press", defaultSets:4, defaultReps:"5-8", defaultLoad:"190 lb"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Pull-ups", defaultSets:4, defaultReps:"4-8", defaultLoad:"BW"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Standing OHP", defaultSets:3, defaultReps:"6-8", defaultLoad:"100-105 lb"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Triceps Pushdown", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:3, d:1, focus:"Upper Strength", ex:"DB Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core finisher"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    {w:3, d:1, focus:"Upper Strength", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core finisher"},
+    
+    // Tuesday - Ruck (short/pace work)
+    {w:3, d:2, focus:"Ruck (Short/Pace Work)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace overall: 15:00-15:45 per mile. Built as: 5 × 6 min near 14:30-15:00 per mile / 4 min easy between, plus warm-up/cool-down"},
+    
+    // Wednesday - Lower Strength
+    {w:3, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~185 lb"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"Slightly heavier if recovering well"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"DB Shoulder Press", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:3, d:4, focus:"Upper Hypertrophy", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long)
+    {w:3, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"7 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:00-15:45 per mile"},
+    
+    // Saturday - Full Body + Optional Ruck
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 16:00-17:00 per mile if feeling fresh"},
+    
+    // Sunday - Recovery
+    {w:3, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-", defaultNote:"Same as prior weeks"},
+    {w:3, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 4 =====
+    // Monday - Upper Strength
+    {w:4, d:1, focus:"Upper Strength", ex:"Bench Press", defaultSets:4, defaultReps:"5-8", defaultLoad:"200 lb"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Pull-ups", defaultSets:4, defaultReps:"4-8", defaultLoad:"BW"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Standing OHP", defaultSets:3, defaultReps:"6-8", defaultLoad:"105 lb"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Triceps Pushdown", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"Triceps + curls - 3×10-12 each"},
+    {w:4, d:1, focus:"Upper Strength", ex:"DB Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:4, d:1, focus:"Upper Strength", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    
+    // Tuesday - Ruck (short)
+    {w:4, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"5-6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:30 per mile"},
+    
+    // Wednesday - Lower Strength
+    {w:4, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~190-195 lb"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"Stay 1-2 reps shy of failure"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"DB Shoulder Press", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:4, d:4, focus:"Upper Hypertrophy", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long, big jump)
+    {w:4, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"8-9 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:30 per mile (big jump in distance)"},
+    
+    // Saturday - Full Body + Optional Ruck
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 16:00-17:00 per mile"},
+    
+    // Sunday - Recovery
+    {w:4, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-"},
+    {w:4, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 5 =====
+    // Moving into heavier strength and more specific ruck work
+    // Monday - Upper Strength (heavier)
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Bench Press", defaultSets:4, defaultReps:"4-6", defaultLoad:"200 lb"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Pull-ups (Weighted)", defaultSets:4, defaultReps:"4-6", defaultLoad:"BW + weight", defaultNote:"Weighted if possible"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Standing OHP", defaultSets:3, defaultReps:"5-7", defaultLoad:"105 lb"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Close-Grip Bench", defaultSets:3, defaultReps:"6-8", defaultLoad:"Moderate", defaultNote:"Or dips"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"EZ/BB Curls", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:5, d:1, focus:"Upper Strength (Heavier)", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    
+    // Tuesday - Ruck (threshold)
+    {w:5, d:2, focus:"Ruck (Threshold)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:30-15:00 per mile (close to event pace but controlled)"},
+    
+    // Wednesday - Lower Strength (heavier)
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~195 lb"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Incline DB Bench", defaultSets:4, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"3-4 sets for chest/back/shoulders"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"1-Arm DB Row", defaultSets:4, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"DB Shoulder Press", defaultSets:4, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"2-3 sets for arms"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:5, d:4, focus:"Upper Hypertrophy", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long)
+    {w:5, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"9-10 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile"},
+    
+    // Saturday - Full Body + Easy Ruck (optional)
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 16:00-17:00 per mile"},
+    
+    // Sunday - Recovery
+    {w:5, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-"},
+    {w:5, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 6 =====
+    // Monday - Upper Strength
+    {w:6, d:1, focus:"Upper Strength", ex:"Bench Press", defaultSets:4, defaultReps:"4-6", defaultLoad:"205 lb"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Pull-ups (Weighted)", defaultSets:4, defaultReps:"4-6", defaultLoad:"BW + weight", defaultNote:"Weighted if able"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Standing OHP", defaultSets:3, defaultReps:"5-7", defaultLoad:"110 lb"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Close-Grip Bench", defaultSets:3, defaultReps:"6-8", defaultLoad:"Moderate", defaultNote:"Or dips"},
+    {w:6, d:1, focus:"Upper Strength", ex:"EZ/BB Curls", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:6, d:1, focus:"Upper Strength", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    
+    // Tuesday - Ruck (threshold)
+    {w:6, d:2, focus:"Ruck (Threshold)", ex:"Ruck March", defaultSets:1, defaultReps:"5-6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:30-15:00 per mile (hold steady pace)"},
+    
+    // Wednesday - Lower Strength
+    {w:6, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~200 lb"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"270 lb", defaultNote:"Only if back feels good; otherwise stay lighter"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Incline DB Bench", defaultSets:4, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"Same pattern as Week 5"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"1-Arm DB Row", defaultSets:4, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"DB Shoulder Press", defaultSets:4, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Hammer Curls", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:6, d:4, focus:"Upper Hypertrophy", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Ruck (long rehearsal)
+    {w:6, d:5, focus:"Ruck (Long Rehearsal)", ex:"Ruck March", defaultSets:1, defaultReps:"10-12 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile"},
+    
+    // Saturday - Full Body (lighter) + Optional Ruck
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~260 lb"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/light accessories"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/light accessories"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Optional Ruck", defaultSets:1, defaultReps:"1-2 miles", defaultLoad:"25 lb", defaultNote:"Very easy, target pace: 16:00-17:00 per mile"},
+    
+    // Sunday - Recovery
+    {w:6, d:7, focus:"Recovery", ex:"Easy Walk", defaultSets:1, defaultReps:"20-40 min", defaultLoad:"-"},
+    {w:6, d:7, focus:"Recovery", ex:"Stretching", defaultSets:1, defaultReps:"10-15 min", defaultLoad:"-", defaultNote:"Hip flexors, hamstrings, calves, chest"},
+    
+    // ===== WEEK 7 (Peak ruck, heavy but controlled lifting) =====
+    // Monday - Upper Strength
+    {w:7, d:1, focus:"Upper Strength", ex:"Bench Press", defaultSets:4, defaultReps:"4-6", defaultLoad:"210 lb"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Pull-ups (Weighted)", defaultSets:4, defaultReps:"4-6", defaultLoad:"BW + weight", defaultNote:"Weighted"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Barbell Row", defaultSets:4, defaultReps:"6-8", defaultLoad:"Moderate"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Standing OHP", defaultSets:3, defaultReps:"4-6", defaultLoad:"110-115 lb", defaultNote:"Only with pristine form"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Close-Grip Bench", defaultSets:3, defaultReps:"6-8", defaultLoad:"Moderate", defaultNote:"Or dips"},
+    {w:7, d:1, focus:"Upper Strength", ex:"EZ/BB Curls", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture/core"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    {w:7, d:1, focus:"Upper Strength", ex:"Dead Bug", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Posture/core"},
+    
+    // Tuesday - Ruck (pace)
+    {w:7, d:2, focus:"Ruck (Pace)", ex:"Ruck March", defaultSets:1, defaultReps:"6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:15-14:45 per mile (slightly faster than goal pace for segments)"},
+    
+    // Wednesday - Lower Strength
+    {w:7, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~205 lb"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~270 lb", defaultNote:"Or stay at Week 6 load if back complains"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Planks", defaultSets:3, defaultReps:"20-30 sec", defaultLoad:"BW", defaultNote:"Core/posture"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Side Planks", defaultSets:2, defaultReps:"20 sec/side", defaultLoad:"BW"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-"},
+    
+    // Thursday - Upper Hypertrophy (moderate)
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate", defaultNote:"Keep volume but avoid failure; think 'solid work,' not 'destroyed'"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Moderate"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"DB Shoulder Press", defaultSets:3, defaultReps:"8-12", defaultLoad:"Moderate"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Lateral Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Face Pulls", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Hammer Curls", defaultSets:2, defaultReps:"10-12", defaultLoad:"Moderate"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Band Pull-Aparts", defaultSets:3, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture"},
+    {w:7, d:4, focus:"Upper Hypertrophy (Moderate)", ex:"Wall Slides", defaultSets:3, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture"},
+    
+    // Friday - Long Ruck Peak
+    {w:7, d:5, focus:"Long Ruck Peak", ex:"Ruck March", defaultSets:1, defaultReps:"14-15 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile (aim to simulate event nutrition/hydration)"},
+    
+    // Saturday - Full Body (very moderate) + No or Tiny Ruck
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"3-5", defaultLoad:"~260-270 lb"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Front Squat", defaultSets:3, defaultReps:"6", defaultLoad:"~185 lb"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Pull-ups", defaultSets:3, defaultReps:"6-8", defaultLoad:"BW", defaultNote:"2-3 sets"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"DB Bench (Light)", defaultSets:3, defaultReps:"8-10", defaultLoad:"Light", defaultNote:"2-3 sets"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Bird-Dog", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Quick core/posture"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Dead Bug", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Quick core/posture"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Optional Ruck", defaultSets:1, defaultReps:"1 mile", defaultLoad:"25 lb", defaultNote:"Skip ruck or do at most 1 easy mile for stiffness"},
+    
+    // Sunday - Recovery
+    {w:7, d:7, focus:"Recovery", ex:"Extra Mobility", defaultSets:1, defaultReps:"20-30 min", defaultLoad:"-", defaultNote:"Extra mobility and sleep; no hard work"},
+    {w:7, d:7, focus:"Recovery", ex:"Rest/Sleep", defaultSets:1, defaultReps:"-", defaultLoad:"-", defaultNote:"Prioritize sleep and recovery"},
+    
+    // ===== WEEK 8 (Taper into March 5) =====
+    // Monday - Upper Deload
+    {w:8, d:1, focus:"Upper Deload", ex:"Bench Press", defaultSets:3, defaultReps:"5", defaultLoad:"175 lb"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Pull-ups", defaultSets:3, defaultReps:"Easy sets", defaultLoad:"BW", defaultNote:"Stop well before failure"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Standing OHP", defaultSets:3, defaultReps:"6", defaultLoad:"85-95 lb", defaultNote:"2-3 sets"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Barbell Row (Light)", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light", defaultNote:"Very light rows"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Triceps Pushdown", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light", defaultNote:"Very light"},
+    {w:8, d:1, focus:"Upper Deload", ex:"DB Curls", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light", defaultNote:"Very light"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Band Pull-Aparts", defaultSets:2, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Short posture set"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Wall Slides", defaultSets:2, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Short posture set"},
+    {w:8, d:1, focus:"Upper Deload", ex:"Chest Stretch (Doorway)", defaultSets:2, defaultReps:"30 sec/side", defaultLoad:"-", defaultNote:"Short posture set"},
+    
+    // Tuesday - Ruck (light)
+    {w:8, d:2, focus:"Ruck (Light)", ex:"Ruck March", defaultSets:1, defaultReps:"4-5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:00-15:45 per mile (smooth and relaxed)"},
+    
+    // Wednesday - Lower Deload
+    {w:8, d:3, focus:"Lower Deload", ex:"Front Squat", defaultSets:3, defaultReps:"5", defaultLoad:"~165-175 lb"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-5", defaultLoad:"~225-235 lb", defaultNote:"2-3 sets"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Reverse Lunges (Light)", defaultSets:2, defaultReps:"8/leg", defaultLoad:"Light"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Standing Calf Raises", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Bird-Dog", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Easy core"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Dead Bug", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Easy core"},
+    
+    // Thursday - Upper Light
+    {w:8, d:4, focus:"Upper Light", ex:"Incline DB Bench", defaultSets:3, defaultReps:"8-12", defaultLoad:"Light", defaultNote:"2-3 easy sets per movement, no strain"},
+    {w:8, d:4, focus:"Upper Light", ex:"1-Arm DB Row", defaultSets:3, defaultReps:"8-12/side", defaultLoad:"Light"},
+    {w:8, d:4, focus:"Upper Light", ex:"DB Shoulder Press", defaultSets:2, defaultReps:"8-12", defaultLoad:"Light"},
+    {w:8, d:4, focus:"Upper Light", ex:"Face Pulls", defaultSets:2, defaultReps:"12-15", defaultLoad:"Light"},
+    {w:8, d:4, focus:"Upper Light", ex:"Hammer Curls", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light"},
+    {w:8, d:4, focus:"Upper Light", ex:"Band Pull-Aparts", defaultSets:2, defaultReps:"15-20", defaultLoad:"Light band", defaultNote:"Posture work 5-10 minutes"},
+    {w:8, d:4, focus:"Upper Light", ex:"Wall Slides", defaultSets:2, defaultReps:"10-12", defaultLoad:"BW", defaultNote:"Posture work"},
+    
+    // Friday - Ruck (final tune-up)
+    {w:8, d:5, focus:"Ruck (Final Tune-up)", ex:"Ruck March", defaultSets:1, defaultReps:"6-8 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:00-15:45 per mile"},
+    
+    // Saturday - Rest / very light
+    {w:8, d:6, focus:"Rest / Very Light", ex:"Easy Walk", defaultSets:1, defaultReps:"20-30 min", defaultLoad:"-", defaultNote:"Easy walk, stretching only"},
+    {w:8, d:6, focus:"Rest / Very Light", ex:"Stretching", defaultSets:1, defaultReps:"15-20 min", defaultLoad:"-", defaultNote:"Full body stretch"},
+    
+    // Sunday - Event week (leading into March 5)
+    {w:8, d:7, focus:"Event Week Prep", ex:"Easy Walk", defaultSets:1, defaultReps:"20-30 min", defaultLoad:"-", defaultNote:"2-3 short easy walks, some posture/core, no rucks"},
+    {w:8, d:7, focus:"Event Week Prep", ex:"Light Posture/Core", defaultSets:2, defaultReps:"5-10 min", defaultLoad:"-", defaultNote:"Very light posture and core work"},
+    {w:8, d:7, focus:"Event Week Prep", ex:"Rest & Nutrition", defaultSets:1, defaultReps:"-", defaultLoad:"-", defaultNote:"Sleep, hydrate, keep carbs and sodium up per your nutrition plan. No rucks."}
+];
 
 // Helper to find exercise data from UID
 function getExerciseFromUid(uid) {
@@ -339,7 +684,7 @@ function renderAnalytics() {
     });
     
     // Create canvas elements
-    const lifts = ['Bench Press', 'Back Squat', 'Deadlift', 'OHP'];
+    const lifts = ['Bench Press', 'Front Squat', 'Trap-Bar Deadlift', 'Standing OHP'];
     
     // Container for lift charts
     const liftsContainer = document.createElement('div');
@@ -404,6 +749,14 @@ function renderAnalytics() {
     
     lifts.forEach(l => currentMaxes[l] = 0);
     
+    // Map exercise names to canonical lift names for analytics
+    const liftNameMap = {
+        'Bench Press': 'Bench Press',
+        'Front Squat': 'Front Squat',
+        'Trap-Bar Deadlift': 'Trap-Bar Deadlift',
+        'Standing OHP': 'Standing OHP'
+    };
+    
     workoutData.forEach((item) => {
         // Construct UID
         const daysExercises = workoutData.filter(d => d.w === item.w && d.d === item.d);
@@ -459,17 +812,17 @@ function renderAnalytics() {
             // Female Standards (approx multipliers)
             standards = {
                 'Bench Press': { beg: 0.5, int: 0.75, adv: 1.0 },
-                'Back Squat': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
-                'OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
+                'Front Squat': { beg: 0.6, int: 0.95, adv: 1.25 },
+                'Trap-Bar Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
+                'Standing OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
             };
         } else {
             // Male Standards
             standards = {
                 'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
-                'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
-                'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
+                'Front Squat': { beg: 0.85, int: 1.25, adv: 1.65 },
+                'Trap-Bar Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+                'Standing OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
             };
         }
         
@@ -895,16 +1248,22 @@ function renderStrengthOverview() {
         <div style="margin-bottom:15px;">
             <div style="font-weight:bold;color:var(--primary);">Weekly Structure</div>
             <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
-                <li><strong>Day 1: Upper Body Strength</strong> (Bench, Pull-ups, Rows, OHP)</li>
-                <li><strong>Day 3: Lower Body Strength</strong> (Squat, Deadlift, Lunges, Plank)</li>
-                <li><strong>Day 5: Conditioning</strong> (High rep calisthenics & KB work)</li>
+                <li><strong>Mon: Upper Strength + Posture</strong> (Bench, Pull-ups, Rows, OHP, Core)</li>
+                <li><strong>Tue: Ruck (Short)</strong> - Speed/tempo work</li>
+                <li><strong>Wed: Lower Strength + Core</strong> (Front Squat, Trap-Bar DL, Lunges, Hip Thrust)</li>
+                <li><strong>Thu: Upper Hypertrophy + Posture</strong> (DB work, Face Pulls, Lateral Raises)</li>
+                <li><strong>Fri: Ruck (Long)</strong> - Endurance building</li>
+                <li><strong>Sat: Full Body + Optional Ruck</strong></li>
+                <li><strong>Sun: Recovery</strong> - Walk, stretch, mobility</li>
             </ul>
             
             <div style="font-weight:bold;color:var(--primary);">Progression Guidelines</div>
             <ul style="margin:5px 0 0 20px;padding:0;color:var(--text);font-size:0.9rem;">
-                <li><strong>Main Lifts:</strong> Aim to increase weight by 5-10lbs every 1-2 weeks when you hit the top end of the rep range with good form.</li>
-                <li><strong>Bodyweight Moves:</strong> Add reps or decrease rest times.</li>
-                <li><strong>Deload:</strong> If performance stalls for 2 weeks, reduce weight by 10% and build back up.</li>
+                <li><strong>Weeks 1-4:</strong> Build base strength, establish movement patterns</li>
+                <li><strong>Weeks 5-7:</strong> Heavier loads, threshold ruck work, peak at Week 7</li>
+                <li><strong>Week 8:</strong> Taper/deload - reduce volume and intensity before event</li>
+                <li><strong>Main Lifts:</strong> Follow prescribed weights; increase 5-10lb when hitting top of rep range</li>
+                <li><strong>Posture Work:</strong> Essential for ruck performance - don't skip!</li>
             </ul>
         </div>
     `;
@@ -937,22 +1296,25 @@ function renderOverview() {
     
     let html = '';
     
-    // Group by week
+    // Group by week with actual ruck data
+    const weeklyRuckData = {
+        1: { short: "3 mi", long: "5 mi", note: "Base building, focus on posture" },
+        2: { short: "3.5 mi", long: "6 mi", note: "Slight progression" },
+        3: { short: "5 mi (pace)", long: "7 mi", note: "Pace work intervals" },
+        4: { short: "5-6 mi", long: "8-9 mi", note: "Big distance jump" },
+        5: { short: "5 mi (threshold)", long: "9-10 mi", note: "Heavier strength, specific ruck work" },
+        6: { short: "5-6 mi (threshold)", long: "10-12 mi", note: "Long rehearsal week" },
+        7: { short: "6 mi (pace)", long: "14-15 mi", note: "Peak ruck week - simulate event" },
+        8: { short: "4-5 mi", long: "6-8 mi", note: "Taper - reduce volume, stay fresh" }
+    };
+    
     for(let w=1; w<=8; w++) {
-        const weekWorkouts = workoutData.filter(i => i.w === w);
-        // Find Ruck distances
-        const ruckShort = weekWorkouts.find(i => i.d === 2);
-        const ruckLong = weekWorkouts.find(i => i.d === 6);
-        
-        let ruckDesc = 'Focus: Build Base';
-        if(ruckShort && ruckLong) {
-            ruckDesc = `Rucks: ${ruckShort.defaultReps} & ${ruckLong.defaultReps}`;
-        }
+        const data = weeklyRuckData[w];
         
         html += `<div style="margin-bottom:15px;border-bottom:1px solid var(--border);padding-bottom:10px;">
-            <div style="font-weight:bold;color:var(--primary);margin-bottom:5px;">Week ${w}</div>
-            <div style="font-size:0.9rem;color:var(--text);">${ruckDesc}</div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Strength: 3x sessions • Conditioning: 1x session</div>
+            <div style="font-weight:bold;color:var(--primary);margin-bottom:5px;">Week ${w}${w === 8 ? ' (Taper)' : w === 7 ? ' (Peak)' : ''}</div>
+            <div style="font-size:0.9rem;color:var(--text);">Short Ruck: ${data.short} • Long Ruck: ${data.long}</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">${data.note}</div>
         </div>`;
     }
     
