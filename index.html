@@ -167,75 +167,271 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 <script>
 // Full workoutData array (all 8 weeks)
 const workoutData = [];
-(function generate() {
-    const upper = [
-        {ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb"},
-        {ex:"Pull-ups",set:"4",rep:"4–8",load:"BW"},
-        {ex:"BB Row",set:"4",rep:"6–8",load:"Moderate"},
-        {ex:"OHP",set:"3",rep:"6–8",load:"95 lb"}
-    ];
-    const lower = [
-        {ex:"Back Squat",set:"3",rep:"5",load:"225 lb"},
-        {ex:"Deadlift",set:"3",rep:"3",load:"315 lb"},
-        {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
-        {ex:"Plank",set:"3",rep:"60s",load:"BW"}
-    ];
-// Ruck Shuffle logic needs to be distinct or merged. Let's keep it as is but maybe add note?
-    const cond = [
-        {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
-        {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
-        {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
-        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb", defaultNote: "Fast shuffle. Get heart rate up."}
-    ];
+function addExercise(w, d, focus, ex, sets, reps, load, note = "") {
+    workoutData.push({
+        w,
+        d,
+        focus,
+        ex,
+        defaultSets: sets,
+        defaultReps: reps,
+        defaultLoad: load,
+        defaultNote: note
+    });
+}
 
-    for(let w=1; w<=8; w++) {
-        // NFM Pacing Logic: 
-        // Goal: 18.6 miles (30km) in 4h 30m = ~14:30 min/mile pace with 25lb pack.
-        // Progression: Start slower/lighter, build speed/distance.
-        
-        // Pacing guidelines for 35yo male targeting NFM pass
-        let shortPace = "16:00-17:00 min/mi"; // Base building
-        let longPace = "17:00-18:00 min/mi"; // Endurance
-        let loadNote = "25-30lb";
-        
-        if (w >= 3 && w <= 5) {
-            shortPace = "15:00-16:00 min/mi";
-            longPace = "16:30-17:30 min/mi";
-            loadNote = "30-35lb";
-        } else if (w >= 6) {
-            shortPace = "14:30-15:00 min/mi"; // Race pace practice
-            longPace = "15:30-16:30 min/mi";
-            loadNote = "35-40lb (Train heavy)";
-        }
+function addUpperStrengthDay(w, benchLoad, ohpLoad, dayNote = "") {
+    const focus = "Upper Strength + Posture";
+    addExercise(w, 1, focus, "Bench Press", 4, "5–8", benchLoad, dayNote);
+    addExercise(w, 1, focus, "Pull-ups", 4, "4–8", "BW", "Band-assist if needed.");
+    addExercise(w, 1, focus, "Barbell Row", 4, "6–8", "Moderate", "Moderate, strict.");
+    addExercise(w, 1, focus, "OHP", 3, "6–8", ohpLoad, "Standing overhead press. Pristine form.");
+    addExercise(w, 1, focus, "Triceps Pushdown", 3, "10–12", "Moderate", "");
+    addExercise(w, 1, focus, "DB Curls", 3, "10–12", "Moderate", "");
 
-        // Day 1: Upper
-        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
-        
-        // Day 2: Short Ruck (Speed/Tempo)
-        workoutData.push({w, d:2, focus:"Ruck (Tempo)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: loadNote, defaultNote: `Target Pace: ${shortPace}. Focus on turnover and efficient stride. NFM Goal: Maintain sub-15:00 pace.`});
-        
-        // Day 3: Lower
-        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
-        
-        // Day 4: Base Ruck (Recovery/Base)
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "25-30lb", defaultNote: "Pace: Comfortable aerobic zone (17:00-19:00/mi). Focus on posture and breathing."});
-        
-        // Day 5: Conditioning
-        cond.forEach(c => {
-             // Handle defaultNote for conditioning items specifically
-             const note = c.defaultNote || "";
-             workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load, defaultNote: note});
-        });
-        
-        // Day 6: Long Ruck (Endurance)
-        const longDist = w === 8 ? "18.6 miles (NFM Test)" : `${6 + w} miles`;
-        const longNote = w === 8 ? "Race Day! Target 4h 30m total time." : `Target Pace: ${longPace}. Build mental endurance. Hydrate every hour.`;
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: longDist, defaultLoad: loadNote, defaultNote: longNote});
-        
-        // Day 7: Rest
-        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
-    }
+    // Posture/core finisher (full details)
+    addExercise(w, 1, focus, "Band Pull-aparts", 3, "15–20", "Band", "Posture/core finisher.");
+    addExercise(w, 1, focus, "Wall Slides", 3, "10–12", "BW", "Posture/core finisher.");
+    addExercise(w, 1, focus, "Bird-dog", 3, "8/side", "BW", "Posture/core finisher.");
+    addExercise(w, 1, focus, "Dead Bug", 3, "8/side", "BW", "Posture/core finisher.");
+}
+
+function addLowerStrengthDay(w, frontSquatLoad, trapBarLoad, trapBarNote = "") {
+    const focus = "Lower Strength (S1-friendly) + Core";
+    addExercise(w, 3, focus, "Front Squat", 4, "5–8", frontSquatLoad, "Light–moderate, controlled.");
+    addExercise(w, 3, focus, "Trap-bar Deadlift", 3, "5–6", trapBarLoad, trapBarNote || "Submaximal, perfect form.");
+    addExercise(w, 3, focus, "Reverse Lunges (DB)", 3, "8/leg", "Moderate", "");
+    addExercise(w, 3, focus, "Hip Thrust / Glute Bridge", 3, "10–12", "Moderate", "");
+    addExercise(w, 3, focus, "Standing Calf Raises", 3, "12–15", "Moderate", "");
+
+    // Core/posture (full details)
+    addExercise(w, 3, focus, "Plank", 3, "20–30 sec", "BW", "");
+    addExercise(w, 3, focus, "Side Plank", 2, "20 sec/side", "BW", "");
+    addExercise(w, 3, focus, "Chest Stretch (Doorway)", 2, "30 sec/side", "BW", "");
+}
+
+function addUpperHypertrophyDay(w, dayNote = "") {
+    const focus = "Upper Hypertrophy + Posture";
+    addExercise(w, 4, focus, "Incline DB Bench", 3, "8–12", "Moderate", dayNote);
+    addExercise(w, 4, focus, "1-arm DB Row", 3, "8–12/side", "Moderate", dayNote);
+    addExercise(w, 4, focus, "DB Shoulder Press", 3, "8–12", "Moderate", dayNote);
+    addExercise(w, 4, focus, "Lateral Raises", 3, "12–15", "Moderate", dayNote);
+    addExercise(w, 4, focus, "Face Pulls", 3, "12–15", "Moderate", dayNote);
+    addExercise(w, 4, focus, "Hammer Curls", 3, "10–12", "Moderate", (dayNote ? `${dayNote} ` : "") + "Do 2–3 sets.");
+    addExercise(w, 4, focus, "Band Pull-aparts", 3, "15–20", "Band", "Posture work.");
+    addExercise(w, 4, focus, "Wall Slides", 3, "10–12", "BW", "Posture work.");
+}
+
+function addShortRuckDay(w, miles, paceNote) {
+    addExercise(w, 2, "Ruck (Short)", "Ruck", 1, miles, "25 lb", paceNote);
+}
+
+function addLongRuckDay(w, miles, paceNote) {
+    addExercise(w, 5, "Ruck (Long)", "Ruck", 1, miles, "25 lb", paceNote);
+}
+
+function addFullBodyDay(w, trapBarLoad, squatNote, optionalRuckNote) {
+    const focus = "Full Body + Optional Easy Ruck";
+    addExercise(w, 6, focus, "Trap-bar Deadlift", 3, "5–6", trapBarLoad, "Keep form perfect; stop well before grindy reps.");
+    addExercise(w, 6, focus, "Front Squat / Goblet Squat", 3, "8–10", squatNote, "Moderate, controlled.");
+    addExercise(w, 6, focus, "Pull-ups / Chin-ups", 3, "6–10", "BW", "");
+    addExercise(w, 6, focus, "DB Bench", 3, "8–10", "Moderate", "");
+    addExercise(w, 6, focus, "KB Swings", 3, "12–15", "Moderate", "If tolerated.");
+    addExercise(w, 6, focus, "Bird-dog", 3, "8/side", "BW", `Core/posture. ${optionalRuckNote}`);
+    addExercise(w, 6, focus, "Dead Bug", 3, "8/side", "BW", `Core/posture. ${optionalRuckNote}`);
+}
+
+function addRecoveryDay(w, walkNote = "") {
+    addExercise(w, 7, "Recovery", "Easy Walk", 1, "20–40 min", "-", walkNote);
+    addExercise(w, 7, "Recovery", "Stretching", 1, "10–15 min", "-", "Hip flexors, hamstrings, calves, chest.");
+}
+
+(function generateProgram() {
+    // Week 1
+    addUpperStrengthDay(1, "180 lb", "95 lb", "");
+    addShortRuckDay(1, "3 miles", "Target pace: 15:45–16:30 per mile (easy–moderate). Focus on posture.");
+    addLowerStrengthDay(1, "~175 lb", "235 lb", "Submaximal, perfect form.");
+    addUpperHypertrophyDay(1, "");
+    addLongRuckDay(1, "5 miles", "Target pace: 15:45–16:30 per mile (steady). Nasal breathing if possible.");
+    addFullBodyDay(1, "235 lb", "Moderate", "Optional: 1–2 miles @ 25 lb, target pace 16:30–17:30 per mile (very easy).");
+    addRecoveryDay(1, "");
+
+    // Week 2
+    addUpperStrengthDay(2, "185 lb", "100 lb", "Posture/core finisher same as Week 1.");
+    addShortRuckDay(2, "3.5 miles", "Target pace: 15:30–16:15 per mile.");
+    addLowerStrengthDay(2, "~180 lb", "240 lb", "Submaximal, perfect form.");
+    addUpperHypertrophyDay(2, "Same pattern as Week 1. Nudge DB loads up if all sets were easy.");
+    addLongRuckDay(2, "6 miles", "Target pace: 15:30–16:15 per mile.");
+    addFullBodyDay(2, "240 lb", "Moderate", "Optional: 1–2 miles @ 25 lb, 16:30–17:30 per mile (very easy).");
+    addRecoveryDay(2, "As Week 1.");
+
+    // Week 3
+    addUpperStrengthDay(3, "190 lb", "100–105 lb", "");
+    addShortRuckDay(3, "5 miles", "Target pace overall: 15:00–15:45 per mile. Build as: 5 × 6 min near 14:30–15:00 / 4 min easy between, plus warm-up/cool-down.");
+    addLowerStrengthDay(3, "~185 lb", "250 lb", "Submaximal, perfect form.");
+    addUpperHypertrophyDay(3, "Same structure. Slightly heavier if recovering well.");
+    addLongRuckDay(3, "7 miles", "Target pace: 15:00–15:45 per mile.");
+    addFullBodyDay(3, "250 lb", "Moderate", "Optional: 1–2 miles @ 25 lb, 16:00–17:00 per mile if feeling fresh.");
+    addRecoveryDay(3, "As prior.");
+
+    // Week 4
+    addUpperStrengthDay(4, "200 lb", "105 lb", "");
+    addShortRuckDay(4, "5–6 miles", "Target pace: 14:45–15:30 per mile.");
+    addLowerStrengthDay(4, "~190–195 lb", "255–260 lb", "Submaximal, perfect form.");
+    addUpperHypertrophyDay(4, "Same; stay 1–2 reps shy of failure.");
+    addLongRuckDay(4, "8–9 miles", "Target pace: 14:45–15:30 per mile.");
+    addFullBodyDay(4, "255–260 lb", "Moderate", "Optional: 1–2 miles @ 25 lb, 16:00–17:00 per mile.");
+    addRecoveryDay(4, "As Week 1.");
+
+    // Week 5
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Bench Press", 4, "4–6", "200 lb", "");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Pull-ups", 4, "4–6", "BW", "Weighted if possible; otherwise strict BW or band-assist.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Barbell Row", 4, "6–8", "Moderate", "");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "OHP", 3, "5–7", "105 lb", "Standing. Pristine form.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Close-grip Bench Press / Dips", 3, "6–8", "Moderate", "Choose close-grip bench OR dips.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "EZ/BB Curls", 3, "8–10", "Moderate", "");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Band Pull-aparts", 3, "15–20", "Band", "Posture/core finisher.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Wall Slides", 3, "10–12", "BW", "Posture/core finisher.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Bird-dog", 3, "8/side", "BW", "Posture/core finisher.");
+    addExercise(5, 1, "Upper Strength (Heavier) + Posture", "Dead Bug", 3, "8/side", "BW", "Posture/core finisher.");
+
+    addShortRuckDay(5, "5 miles", "Threshold: target pace 14:30–15:00 per mile (close to event pace but controlled).");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Front Squat", 4, "4–6", "~195 lb", "");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Trap-bar Deadlift", 3, "4–6", "255–260 lb", "Heavier, but keep form perfect.");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Reverse Lunges (DB)", 3, "8/leg", "Moderate", "");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Hip Thrust", 3, "8–10", "Moderate", "");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Standing Calf Raises", 4, "10–12", "Moderate", "Do 3–4 sets.");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Plank", 3, "20–30 sec", "BW", "");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Side Plank", 2, "20 sec/side", "BW", "");
+    addExercise(5, 3, "Lower Strength (Heavier) + Core", "Chest Stretch (Doorway)", 2, "30 sec/side", "BW", "");
+
+    addUpperHypertrophyDay(5, "As before: 3–4×8–12 for chest/back/shoulders, 2–3×10–12 for arms; plus posture work.");
+    addLongRuckDay(5, "9–10 miles", "Target pace: 14:45–15:15 per mile.");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "Trap-bar Deadlift", 3, "4–6", "255–260 lb", "");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "Front Squat", 3, "6–8", "~185–190 lb", "");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "Pull-ups / Chin-ups", 3, "6–10", "BW", "");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "DB Bench", 3, "8–10", "Moderate", "");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "KB Swings", 3, "12–15", "Moderate", "If tolerated.");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "Bird-dog", 3, "8/side", "BW", "Core/posture. Optional: 1–2 miles @ 25 lb, 16:00–17:00 per mile.");
+    addExercise(5, 6, "Full Body + Easy Ruck (Optional)", "Dead Bug", 3, "8/side", "BW", "Core/posture. Optional: 1–2 miles @ 25 lb, 16:00–17:00 per mile.");
+    addRecoveryDay(5, "As Week 1.");
+
+    // Week 6
+    addExercise(6, 1, "Upper Strength + Posture", "Bench Press", 4, "4–6", "205 lb", "");
+    addExercise(6, 1, "Upper Strength + Posture", "Pull-ups", 4, "4–6", "BW", "Weighted if able; otherwise strict BW or band-assist.");
+    addExercise(6, 1, "Upper Strength + Posture", "Barbell Row", 4, "6–8", "Moderate", "");
+    addExercise(6, 1, "Upper Strength + Posture", "OHP", 3, "5–7", "110 lb", "Standing. Pristine form.");
+    addExercise(6, 1, "Upper Strength + Posture", "Close-grip Bench Press / Dips", 3, "6–8", "Moderate", "Choose close-grip bench OR dips.");
+    addExercise(6, 1, "Upper Strength + Posture", "EZ/BB Curls", 3, "8–10", "Moderate", "");
+    addExercise(6, 1, "Upper Strength + Posture", "Band Pull-aparts", 3, "15–20", "Band", "Posture/core finisher.");
+    addExercise(6, 1, "Upper Strength + Posture", "Wall Slides", 3, "10–12", "BW", "Posture/core finisher.");
+    addExercise(6, 1, "Upper Strength + Posture", "Bird-dog", 3, "8/side", "BW", "Posture/core finisher.");
+    addExercise(6, 1, "Upper Strength + Posture", "Dead Bug", 3, "8/side", "BW", "Posture/core finisher.");
+
+    addShortRuckDay(6, "5–6 miles", "Threshold: target pace 14:30–15:00 per mile (hold steady).");
+    addExercise(6, 3, "Lower Strength + Core", "Front Squat", 4, "4–6", "~200 lb", "");
+    addExercise(6, 3, "Lower Strength + Core", "Trap-bar Deadlift", 3, "4–6", "270 lb", "Only if back feels good; otherwise stay lighter.");
+    addExercise(6, 3, "Lower Strength + Core", "Reverse Lunges (DB)", 3, "8/leg", "Moderate", "");
+    addExercise(6, 3, "Lower Strength + Core", "Hip Thrust", 3, "8–10", "Moderate", "");
+    addExercise(6, 3, "Lower Strength + Core", "Standing Calf Raises", 4, "10–12", "Moderate", "Do 3–4 sets.");
+    addExercise(6, 3, "Lower Strength + Core", "Plank", 3, "20–30 sec", "BW", "");
+    addExercise(6, 3, "Lower Strength + Core", "Side Plank", 2, "20 sec/side", "BW", "");
+    addExercise(6, 3, "Lower Strength + Core", "Chest Stretch (Doorway)", 2, "30 sec/side", "BW", "");
+
+    addUpperHypertrophyDay(6, "Same pattern.");
+    addLongRuckDay(6, "10–12 miles", "Long rehearsal. Target pace: 14:45–15:15 per mile.");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "Trap-bar Deadlift", 3, "4–6", "~260 lb", "");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "Front Squat", 3, "6–8", "~185–190 lb", "");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "Pull-ups / Chin-ups", 3, "6–10", "BW", "");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "DB Bench", 3, "8–10", "Moderate", "");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "Bird-dog", 2, "8/side", "BW", "Core/light accessories. Optional: 1–2 miles very easy @ 25 lb, 16:00–17:00 per mile.");
+    addExercise(6, 6, "Full Body (Lighter) + Optional Ruck", "Dead Bug", 2, "8/side", "BW", "Core/light accessories. Optional: 1–2 miles very easy @ 25 lb, 16:00–17:00 per mile.");
+    addRecoveryDay(6, "As Week 1.");
+
+    // Week 7
+    addExercise(7, 1, "Upper Strength + Posture", "Bench Press", 4, "4–6", "210 lb", "");
+    addExercise(7, 1, "Upper Strength + Posture", "Pull-ups", 4, "4–6", "BW", "Weighted if possible.");
+    addExercise(7, 1, "Upper Strength + Posture", "Barbell Row", 4, "6–8", "Moderate", "");
+    addExercise(7, 1, "Upper Strength + Posture", "OHP", 3, "4–6", "110–115 lb", "Only with pristine form.");
+    addExercise(7, 1, "Upper Strength + Posture", "Close-grip Bench Press / Dips", 3, "6–8", "Moderate", "Choose close-grip bench OR dips.");
+    addExercise(7, 1, "Upper Strength + Posture", "EZ/BB Curls", 3, "8–10", "Moderate", "");
+    addExercise(7, 1, "Upper Strength + Posture", "Band Pull-aparts", 3, "15–20", "Band", "Posture/core finisher.");
+    addExercise(7, 1, "Upper Strength + Posture", "Wall Slides", 3, "10–12", "BW", "Posture/core finisher.");
+    addExercise(7, 1, "Upper Strength + Posture", "Bird-dog", 3, "8/side", "BW", "Posture/core finisher.");
+    addExercise(7, 1, "Upper Strength + Posture", "Dead Bug", 3, "8/side", "BW", "Posture/core finisher.");
+
+    addShortRuckDay(7, "6 miles", "Target pace: 14:15–14:45 per mile (slightly faster than goal pace for segments).");
+    addExercise(7, 3, "Lower Strength + Core", "Front Squat", 4, "4–6", "~205 lb", "");
+    addExercise(7, 3, "Lower Strength + Core", "Trap-bar Deadlift", 3, "4–6", "~270 lb", "Or stay at Week 6 load if back complains.");
+    addExercise(7, 3, "Lower Strength + Core", "Reverse Lunges (DB)", 3, "8/leg", "Moderate", "");
+    addExercise(7, 3, "Lower Strength + Core", "Hip Thrust", 3, "8–10", "Moderate", "");
+    addExercise(7, 3, "Lower Strength + Core", "Standing Calf Raises", 4, "10–12", "Moderate", "Do 3–4 sets.");
+    addExercise(7, 3, "Lower Strength + Core", "Plank", 3, "20–30 sec", "BW", "");
+    addExercise(7, 3, "Lower Strength + Core", "Side Plank", 2, "20 sec/side", "BW", "");
+    addExercise(7, 3, "Lower Strength + Core", "Chest Stretch (Doorway)", 2, "30 sec/side", "BW", "");
+
+    addUpperHypertrophyDay(7, "Moderate: keep volume but avoid failure.");
+    addLongRuckDay(7, "14–15 miles", "Target pace: 14:45–15:15 per mile. Simulate event nutrition/hydration.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Trap-bar Deadlift", 3, "3–5", "~260–270 lb", "");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Front Squat", 3, "6", "~185 lb", "");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Pull-ups / Chin-ups", 3, "6–8", "BW", "Do 2–3 sets.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Light DB Bench", 3, "8–10", "Light", "Do 2–3 sets.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Band Pull-aparts", 2, "15–20", "Band", "Quick posture work. Skip ruck or do at most 1 easy mile for stiffness.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Wall Slides", 2, "10–12", "BW", "Quick posture work. Skip ruck or do at most 1 easy mile for stiffness.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Bird-dog", 2, "8/side", "BW", "Quick core/posture. Skip ruck or do at most 1 easy mile for stiffness.");
+    addExercise(7, 6, "Full Body (Very Moderate) + No/Tiny Ruck", "Dead Bug", 2, "8/side", "BW", "Quick core/posture. Skip ruck or do at most 1 easy mile for stiffness.");
+    addRecoveryDay(7, "Extra mobility and sleep; no hard work.");
+
+    // Week 8
+    addExercise(8, 1, "Upper Deload", "Bench Press", 3, "5", "175 lb", "");
+    addExercise(8, 1, "Upper Deload", "Pull-ups", 3, "Easy sets", "BW", "Stop well before failure.");
+    addExercise(8, 1, "Upper Deload", "OHP", 3, "6", "85–95 lb", "Do 2–3 sets. Easy reps.");
+    addExercise(8, 1, "Upper Deload", "Light Rows", 2, "10–12", "Very light", "Very light rows/triceps/curls.");
+    addExercise(8, 1, "Upper Deload", "Triceps (Light)", 2, "10–12", "Very light", "Very light rows/triceps/curls.");
+    addExercise(8, 1, "Upper Deload", "Curls (Light)", 2, "10–12", "Very light", "Very light rows/triceps/curls.");
+    addExercise(8, 1, "Upper Deload", "Band Pull-aparts", 2, "15–20", "Band", "Short posture set.");
+    addExercise(8, 1, "Upper Deload", "Wall Slides", 2, "10–12", "BW", "Short posture set.");
+    addExercise(8, 1, "Upper Deload", "Chest Stretch (Doorway)", 2, "30 sec/side", "BW", "Short posture set.");
+
+    addShortRuckDay(8, "4–5 miles", "Light: target pace 15:00–15:45 per mile (smooth and relaxed).");
+    addExercise(8, 3, "Lower Deload", "Front Squat", 3, "5", "~165–175 lb", "");
+    addExercise(8, 3, "Lower Deload", "Trap-bar Deadlift", 3, "4–5", "~225–235 lb", "Do 2–3 sets.");
+    addExercise(8, 3, "Lower Deload", "Light Reverse Lunges", 2, "8/leg", "Light", "");
+    addExercise(8, 3, "Lower Deload", "Standing Calf Raises", 2, "10–12", "Light", "");
+    addExercise(8, 3, "Lower Deload", "Bird-dog", 2, "8/side", "BW", "Easy core.");
+    addExercise(8, 3, "Lower Deload", "Dead Bug", 2, "8/side", "BW", "Easy core.");
+
+    addExercise(8, 4, "Upper Light", "Incline DB Bench", 3, "8–12", "Light", "2–3 easy sets per movement, no strain. Posture work 5–10 min.");
+    addExercise(8, 4, "Upper Light", "1-arm DB Row", 3, "8–12/side", "Light", "2–3 easy sets per movement, no strain.");
+    addExercise(8, 4, "Upper Light", "DB Shoulder Press", 3, "8–12", "Light", "2–3 easy sets per movement, no strain.");
+    addExercise(8, 4, "Upper Light", "Lateral Raises", 2, "12–15", "Light", "");
+    addExercise(8, 4, "Upper Light", "Face Pulls", 2, "12–15", "Light", "");
+    addExercise(8, 4, "Upper Light", "Band Pull-aparts", 2, "15–20", "Band", "Posture work 5–10 min.");
+    addExercise(8, 4, "Upper Light", "Wall Slides", 2, "10–12", "BW", "Posture work 5–10 min.");
+
+    addLongRuckDay(8, "6–8 miles", "Final tune-up. Target pace: 15:00–15:45 per mile.");
+    addExercise(8, 6, "Rest / Very Light", "Easy Walk", 1, "As desired", "-", "Easy walk, stretching only.");
+    addExercise(8, 6, "Rest / Very Light", "Stretching", 1, "As desired", "-", "Very light only.");
+    addExercise(8, 7, "Event Week (Leading into March 5)", "Easy Walks + Posture/Core", 1, "Plan", "-", "2–3 short easy walks (20–30 min), some posture/core, no rucks. Sleep, hydrate, keep carbs and sodium up per your nutrition plan.");
 })();
+
+// Program versioning: prevents old logged sets/notes from mapping to new workouts
+const PROGRAM_VERSION = "ruck-strength-plan-user-2026-01-05";
+function migrateProgramDataIfNeeded() {
+    const key = "programVersion";
+    const prev = localStorage.getItem(key);
+    if (prev === PROGRAM_VERSION) return;
+
+    const toDelete = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (/^w\d+-d\d+-i\d+_(sets|note)$/.test(k)) toDelete.push(k);
+        if (/^completion_date_w\d+_d\d+$/.test(k)) toDelete.push(k);
+    }
+    toDelete.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(key, PROGRAM_VERSION);
+}
 
 // Helper to find exercise data from UID
 function getExerciseFromUid(uid) {
@@ -339,7 +535,7 @@ function renderAnalytics() {
     });
     
     // Create canvas elements
-    const lifts = ['Bench Press', 'Back Squat', 'Deadlift', 'OHP'];
+    const lifts = ['Bench Press', 'Front Squat', 'Trap-bar Deadlift', 'OHP'];
     
     // Container for lift charts
     const liftsContainer = document.createElement('div');
@@ -412,7 +608,7 @@ function renderAnalytics() {
         const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
         
         // Rucking Logic
-        if (item.ex === "Ruck March" && item.focus.includes("Ruck")) {
+        if (item.ex === "Ruck" && item.focus.includes("Ruck")) {
             // Check if done
             const isDone = sets.every(s => s.done);
             if (isDone) {
@@ -459,16 +655,16 @@ function renderAnalytics() {
             // Female Standards (approx multipliers)
             standards = {
                 'Bench Press': { beg: 0.5, int: 0.75, adv: 1.0 },
-                'Back Squat': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
+                'Front Squat': { beg: 0.7, int: 1.05, adv: 1.4 },
+                'Trap-bar Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
                 'OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
             };
         } else {
             // Male Standards
             standards = {
                 'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Back Squat': { beg: 1.0, int: 1.5, adv: 2.0 },
-                'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+                'Front Squat': { beg: 0.9, int: 1.35, adv: 1.8 },
+                'Trap-bar Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
                 'OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
             };
         }
@@ -895,9 +1091,10 @@ function renderStrengthOverview() {
         <div style="margin-bottom:15px;">
             <div style="font-weight:bold;color:var(--primary);">Weekly Structure</div>
             <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
-                <li><strong>Day 1: Upper Body Strength</strong> (Bench, Pull-ups, Rows, OHP)</li>
-                <li><strong>Day 3: Lower Body Strength</strong> (Squat, Deadlift, Lunges, Plank)</li>
-                <li><strong>Day 5: Conditioning</strong> (High rep calisthenics & KB work)</li>
+                <li><strong>Mon: Upper Strength + Posture</strong> (Bench, Pull-ups, Rows, OHP + posture/core)</li>
+                <li><strong>Wed: Lower Strength + Core</strong> (Front squat, Trap-bar DL, lunges, hip thrust, calves + core)</li>
+                <li><strong>Thu: Upper Hypertrophy + Posture</strong> (DB pressing/rows + posture)</li>
+                <li><strong>Sat: Full Body + Core</strong> (Trap-bar DL, squat variation, pull-ups, DB bench + core)</li>
             </ul>
             
             <div style="font-weight:bold;color:var(--primary);">Progression Guidelines</div>
@@ -941,8 +1138,8 @@ function renderOverview() {
     for(let w=1; w<=8; w++) {
         const weekWorkouts = workoutData.filter(i => i.w === w);
         // Find Ruck distances
-        const ruckShort = weekWorkouts.find(i => i.d === 2);
-        const ruckLong = weekWorkouts.find(i => i.d === 6);
+        const ruckShort = weekWorkouts.find(i => i.d === 2 && i.ex === 'Ruck');
+        const ruckLong = weekWorkouts.find(i => i.d === 5 && i.ex === 'Ruck');
         
         let ruckDesc = 'Focus: Build Base';
         if(ruckShort && ruckLong) {
@@ -952,7 +1149,7 @@ function renderOverview() {
         html += `<div style="margin-bottom:15px;border-bottom:1px solid var(--border);padding-bottom:10px;">
             <div style="font-weight:bold;color:var(--primary);margin-bottom:5px;">Week ${w}</div>
             <div style="font-size:0.9rem;color:var(--text);">${ruckDesc}</div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Strength: 3x sessions • Conditioning: 1x session</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Strength: 4x sessions • Ruck: 2x (Sat optional is in notes)</div>
         </div>`;
     }
     
@@ -1137,9 +1334,8 @@ function deleteSet(uid, setIdx) {
 
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
 function getDayName(d){
-    // Calculate total day number based on current week
-    const totalDay = ((currentWeek - 1) * 7) + d;
-    return "Day " + totalDay;
+    const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    return names[d-1] || `Day ${d}`;
 }
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
@@ -1264,6 +1460,8 @@ window.onload=function(){
 
     const savedStart=localStorage.getItem('ruckStartDate');
     const datePicker=document.getElementById('start-date-picker');
+    
+    migrateProgramDataIfNeeded();
     
     // Set user name input
     const savedName = localStorage.getItem('userName');
