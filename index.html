@@ -75,9 +75,6 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 /* Target info badge */
 .target-badge { font-size:0.75rem; color:#64748b; background:var(--bg); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:normal; }
 
-/* Keyboard shortcut hints */
-.kbd { background:#e2e8f0; border:1px solid #cbd5e1; border-radius:4px; padding:2px 6px; font-family:monospace; font-size:0.75rem; margin-left:5px; }
-body[data-theme="dark"] .kbd { background:#334155; border-color:#475569; }
 </style>
 </head>
 <body>
@@ -96,14 +93,6 @@ body[data-theme="dark"] .kbd { background:#334155; border-color:#475569; }
         <div class="home-btn" onclick="navigateTo('dashboard')" role="button" aria-label="Go to Dashboard view">📈 Dashboard</div>
         <div class="home-btn" onclick="navigateTo('history')" role="button" aria-label="Go to History view">📜 History</div>
         <div class="home-btn" onclick="navigateTo('settings')" role="button" aria-label="Go to Settings view">⚙️ Settings</div>
-    </div>
-    <div style="margin-top:20px;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
-        <div style="font-weight:bold;margin-bottom:8px;">⌨️ Keyboard Shortcuts</div>
-        <div style="font-size:0.85rem;color:var(--text);">
-            <div><span class="kbd">W</span> Workout <span class="kbd">A</span> Analytics <span class="kbd">D</span> Dashboard</div>
-            <div style="margin-top:4px;"><span class="kbd">H</span> History <span class="kbd">S</span> Settings <span class="kbd">T</span> Toggle Timer</div>
-            <div style="margin-top:4px;"><span class="kbd">←</span><span class="kbd">→</span> Prev/Next Day <span class="kbd">R</span> Start Rest Timer</div>
-        </div>
     </div>
 </div>
 
@@ -1673,8 +1662,7 @@ function undoDelete() {
 
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
 function getDayName(d){
-    const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return dayNames[d] || 'Day ' + d;
+    return 'Day ' + d;
 }
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
