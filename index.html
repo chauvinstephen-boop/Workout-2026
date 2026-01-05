@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>8-Week Ruck & Strength Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-manifest.json
+<link rel="manifest" href="manifest.json">
 <style>
 :root { --primary:#2563eb; --bg:#f8fafc; --card:#fff; --text:#1e293b; --border:#e2e8f0; --success:#10b981; }
 body[data-theme="dark"] { --bg:#0f172a; --card:#1e293b; --text:#f8fafc; --border:#334155; }
@@ -17,7 +17,7 @@ button.toggle-theme { background:white; color:var(--primary); border:none; paddi
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px; }
 .home-btn { background:var(--card); border:1px solid var(--border); padding:2rem; border-radius:12px; text-align:center; font-weight:700; font-size:1.1rem; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05); color:var(--text); transition:transform 0.1s; }
 .home-btn:active { transform:scale(0.98); }
-.controls { padding:1rem; display:flex; gap:10px; justify-content:space-between; align-items:center; background:white; border-bottom:1px solid var(--border); margin-bottom:1rem; }
+.controls { padding:1rem; display:flex; gap:10px; justify-content:space-between; align-items:center; background:var(--card); border-bottom:1px solid var(--border); margin-bottom:1rem; }
 select,input[type="date"] { padding:8px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
 .summary-dashboard { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:15px; }
 .summary-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px; text-align:center; font-size:0.8rem; color:var(--text); }
@@ -46,9 +46,13 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 @media (max-width: 599px) {
     .charts-grid { grid-template-columns: 1fr; }
     .home-grid { grid-template-columns: 1fr; }
-    .summary-dashboard { grid-template-columns: repeat(4, 1fr); }
+    .summary-dashboard { grid-template-columns: repeat(4, 1fr); font-size: 0.7rem; }
+    .summary-card { padding: 6px; }
     /* Ensure inputs don't zoom on iOS */
     select, input[type="text"], input[type="date"] { font-size: 16px !important; }
+}
+@media (max-width: 380px) {
+    .summary-dashboard { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
@@ -159,8 +163,11 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
             <option value="female">Female</option>
         </select>
     </div>
-    <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">Toggle Dark Mode</div>
-    <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">Export Notes</div>
+    <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">🌙 Toggle Dark Mode</div>
+    <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">📝 Export Notes</div>
+    <div class="home-btn" onclick="exportAllData()" style="margin-bottom:10px;">💾 Export All Data</div>
+    <div class="home-btn" onclick="document.getElementById('import-file').click()" style="margin-bottom:10px;">📂 Import Data</div>
+    <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
     <div class="home-btn" onclick="resetData()" style="background:#ef4444;color:white;margin-top:20px;">⚠️ Reset All Data</div>
 </div>
 
@@ -749,14 +756,6 @@ function renderAnalytics() {
     
     lifts.forEach(l => currentMaxes[l] = 0);
     
-    // Map exercise names to canonical lift names for analytics
-    const liftNameMap = {
-        'Bench Press': 'Bench Press',
-        'Front Squat': 'Front Squat',
-        'Trap-Bar Deadlift': 'Trap-Bar Deadlift',
-        'Standing OHP': 'Standing OHP'
-    };
-    
     workoutData.forEach((item) => {
         // Construct UID
         const daysExercises = workoutData.filter(d => d.w === item.w && d.d === item.d);
@@ -925,10 +924,49 @@ function resetData() {
     }
 }
 
+function exportAllData() {
+    const data = {};
+    for(let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    a.download = `ruck-tracker-backup-${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (confirm("This will overwrite your current data. Continue?")) {
+                Object.keys(data).forEach(key => {
+                    localStorage.setItem(key, data[key]);
+                });
+                alert("Data imported successfully!");
+                location.reload();
+            }
+        } catch (err) {
+            alert("Error importing data: Invalid file format");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Reset file input
+}
+
 let currentWeek=1,currentDay=1,startDate=new Date();
 function toggleTheme(){const body=document.body;const current=body.getAttribute('data-theme');if(current==='dark'){body.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{body.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}}
 if(localStorage.getItem('theme')==='dark'){document.body.setAttribute('data-theme','dark');}
-function exportNotes(){let notes='Workout Notes:\\n';for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.endsWith('_note')){notes+=key+': '+localStorage.getItem(key)+'\\n';}}const blob=new Blob([notes],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ruck_notes.txt';a.click();URL.revokeObjectURL(url);}
+function exportNotes(){let notes='Workout Notes:\n';for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.endsWith('_note')){notes+=key+': '+localStorage.getItem(key)+'\n';}}const blob=new Blob([notes],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ruck_notes.txt';a.click();URL.revokeObjectURL(url);}
 
 function updateSummary(){
     const dashboard=document.getElementById('summary-dashboard');
@@ -1020,6 +1058,11 @@ function saveUserName(name) {
 }
 
 function saveBodyweight(bw) {
+    const weight = parseFloat(bw);
+    if (bw && (isNaN(weight) || weight < 50 || weight > 500)) {
+        // Invalid weight - don't save but don't alert on every keystroke
+        return;
+    }
     localStorage.setItem('userBodyweight', bw);
     // Refresh analytics if view is active
     if(document.getElementById('view-analytics').classList.contains('active')) {
@@ -1351,8 +1394,11 @@ function renderWorkout(){
         }
         savedNote = savedNote || '';
         
+        // Check if all sets are completed for this exercise
+        const allSetsDone = sets.length > 0 && sets.every(s => s.done);
+        
         const card=document.createElement('div');
-        card.className='exercise-card';
+        card.className = allSetsDone ? 'exercise-card completed' : 'exercise-card';
         card.id='card-'+uid;
         
         // Find previous log
@@ -1499,9 +1545,8 @@ function deleteSet(uid, setIdx) {
 
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
 function getDayName(d){
-    // Calculate total day number based on current week
-    const totalDay = ((currentWeek - 1) * 7) + d;
-    return "Day " + totalDay;
+    const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return dayNames[d] || 'Day ' + d;
 }
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
