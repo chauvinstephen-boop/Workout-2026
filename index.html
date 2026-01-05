@@ -166,76 +166,2599 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 
 <script>
 // Full workoutData array (all 8 weeks)
-const workoutData = [];
-(function generate() {
-    const upper = [
-        {ex:"Bench Press",set:"4",rep:"5–8",load:"180 lb"},
-        {ex:"Pull-ups",set:"4",rep:"4–8",load:"BW"},
-        {ex:"BB Row",set:"4",rep:"6–8",load:"Moderate"},
-        {ex:"OHP",set:"3",rep:"6–8",load:"95 lb"}
-    ];
-    const lower = [
-        {ex:"Back Squat",set:"3",rep:"5",load:"225 lb"},
-        {ex:"Deadlift",set:"3",rep:"3",load:"315 lb"},
-        {ex:"Lunges",set:"3",rep:"10/leg",load:"40 lb"},
-        {ex:"Plank",set:"3",rep:"60s",load:"BW"}
-    ];
-// Ruck Shuffle logic needs to be distinct or merged. Let's keep it as is but maybe add note?
-    const cond = [
-        {ex:"Push-ups",set:"5",rep:"20",load:"BW"},
-        {ex:"Air Squats",set:"5",rep:"30",load:"BW"},
-        {ex:"KB Swings",set:"4",rep:"25",load:"53 lb"},
-        {ex:"Ruck Shuffle",set:"1",rep:"1 mile",load:"45 lb", defaultNote: "Fast shuffle. Get heart rate up."}
-    ];
-
-    for(let w=1; w<=8; w++) {
-        // NFM Pacing Logic: 
-        // Goal: 18.6 miles (30km) in 4h 30m = ~14:30 min/mile pace with 25lb pack.
-        // Progression: Start slower/lighter, build speed/distance.
-        
-        // Pacing guidelines for 35yo male targeting NFM pass
-        let shortPace = "16:00-17:00 min/mi"; // Base building
-        let longPace = "17:00-18:00 min/mi"; // Endurance
-        let loadNote = "25-30lb";
-        
-        if (w >= 3 && w <= 5) {
-            shortPace = "15:00-16:00 min/mi";
-            longPace = "16:30-17:30 min/mi";
-            loadNote = "30-35lb";
-        } else if (w >= 6) {
-            shortPace = "14:30-15:00 min/mi"; // Race pace practice
-            longPace = "15:30-16:30 min/mi";
-            loadNote = "35-40lb (Train heavy)";
-        }
-
-        // Day 1: Upper
-        upper.forEach(u => workoutData.push({w, d:1, focus:"Upper Strength", ex:u.ex, defaultSets: parseInt(u.set), defaultReps: u.rep, defaultLoad: u.load}));
-        
-        // Day 2: Short Ruck (Speed/Tempo)
-        workoutData.push({w, d:2, focus:"Ruck (Tempo)", ex:"Ruck March", defaultSets: 1, defaultReps: `${3 + (w-1)*0.5} miles`, defaultLoad: loadNote, defaultNote: `Target Pace: ${shortPace}. Focus on turnover and efficient stride. NFM Goal: Maintain sub-15:00 pace.`});
-        
-        // Day 3: Lower
-        lower.forEach(l => workoutData.push({w, d:3, focus:"Lower Strength", ex:l.ex, defaultSets: parseInt(l.set), defaultReps: l.rep, defaultLoad: l.load}));
-        
-        // Day 4: Base Ruck (Recovery/Base)
-        workoutData.push({w, d:4, focus:"Ruck (Base)", ex:"Ruck March", defaultSets: 1, defaultReps: `${4 + (w-1)*0.5} miles`, defaultLoad: "25-30lb", defaultNote: "Pace: Comfortable aerobic zone (17:00-19:00/mi). Focus on posture and breathing."});
-        
-        // Day 5: Conditioning
-        cond.forEach(c => {
-             // Handle defaultNote for conditioning items specifically
-             const note = c.defaultNote || "";
-             workoutData.push({w, d:5, focus:"Conditioning", ex:c.ex, defaultSets: parseInt(c.set), defaultReps: c.rep, defaultLoad: c.load, defaultNote: note});
-        });
-        
-        // Day 6: Long Ruck (Endurance)
-        const longDist = w === 8 ? "18.6 miles (NFM Test)" : `${6 + w} miles`;
-        const longNote = w === 8 ? "Race Day! Target 4h 30m total time." : `Target Pace: ${longPace}. Build mental endurance. Hydrate every hour.`;
-        workoutData.push({w, d:6, focus:"Ruck (Long)", ex:"Ruck March", defaultSets: 1, defaultReps: longDist, defaultLoad: loadNote, defaultNote: longNote});
-        
-        // Day 7: Rest
-        workoutData.push({w, d:7, focus:"Recovery", ex:"Mobility / Rest", defaultSets: 1, defaultReps: "30 min", defaultLoad: "-"});
+const workoutData = [
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "180 lb"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Pull-ups",
+        "defaultSets": 4,
+        "defaultReps": "4\u20138",
+        "defaultLoad": "BW",
+        "defaultNote": "Band-assist if needed"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "Moderate",
+        "defaultNote": "Strict form"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "95 lb"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Triceps Pushdown",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "DB Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 2,
+        "focus": "Ruck (short)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "3 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:45\u201316:30 per mile (easy\u2013moderate; focus on posture)"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "~175 lb",
+        "defaultNote": "Light\u2013moderate"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "235 lb",
+        "defaultNote": "Submaximal, perfect form"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "DBs"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Hip Thrust/Glute Bridge",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Standing Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 3,
+        "focus": "Lower Strength + Core",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 5,
+        "focus": "Ruck (long)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "5 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:45\u201316:30 per mile (steady, nasal breathing if possible)"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "235 lb"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Front/Goblet Squat",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "Moderate"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Pull-ups/Chin-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "BW"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "KB Swings",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "If tolerated"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 16:30\u201317:30 per mile (very easy)"
+    },
+    {
+        "w": 1,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 1,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "185 lb"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Pull-ups",
+        "defaultSets": 4,
+        "defaultReps": "4\u20138",
+        "defaultLoad": "BW"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "100 lb"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Triceps Pushdown",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "DB Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 1,
+        "focus": "Upper Strength + Posture",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 2,
+        "focus": "Ruck (short)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "3.5 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:30\u201316:15 per mile"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "~180 lb"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "240 lb"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Nudge load up"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 4,
+        "focus": "Upper Hypertrophy + Posture",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 5,
+        "focus": "Ruck (long)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "6 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:30\u201316:15 per mile"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "240 lb"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Front/Goblet Squat",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Pull-ups/Chin-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "KB Swings",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 16:30\u201317:30 per mile"
+    },
+    {
+        "w": 2,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 2,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "190 lb"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Pull-ups",
+        "defaultSets": 4,
+        "defaultReps": "4\u20138",
+        "defaultLoad": "BW"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "100\u2013105 lb"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Triceps Pushdown",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "DB Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 2,
+        "focus": "Ruck (short/pace work)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "5 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace overall: 15:00\u201315:45/mi. Built as: 5 x 6 min near 14:30\u201315:00/mi / 4 min easy between"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "~185 lb"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "250 lb"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Slightly heavier if recovering well"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 5,
+        "focus": "Ruck (long)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "7 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:00\u201315:45 per mile"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "250 lb"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Front/Goblet Squat",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "KB Swings",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "16:00\u201317:00 per mile if feeling fresh"
+    },
+    {
+        "w": 3,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 3,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "200 lb"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Pull-ups",
+        "defaultSets": 4,
+        "defaultReps": "4\u20138",
+        "defaultLoad": "BW"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "105 lb"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Triceps Pushdown",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "DB Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 2,
+        "focus": "Ruck (short)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "5\u20136 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:45\u201315:30 per mile"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "5\u20138",
+        "defaultLoad": "~190\u2013195 lb"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "255\u2013260 lb"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Stay 1\u20132 reps shy of failure"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 5,
+        "focus": "Ruck (long, big jump)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "8\u20139 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:45\u201315:30 per mile"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "5\u20136",
+        "defaultLoad": "255\u2013260 lb"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Front/Goblet Squat",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "KB Swings",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 6,
+        "focus": "Full Body + Optional Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "16:00\u201317:00 per mile"
+    },
+    {
+        "w": 4,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 4,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "200 lb"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Pull-ups (Weighted)",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "BW+"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "5\u20137",
+        "defaultLoad": "105 lb"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Close-grip Bench/Dips",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "EZ/BB Curls",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 1,
+        "focus": "Upper Strength (heavier)",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 2,
+        "focus": "Ruck (threshold)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "5 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:30\u201315:00 per mile (close to event pace but controlled)"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "~195 lb"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "255\u2013260 lb"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 3,
+        "focus": "Lower Strength (heavier)",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 5,
+        "focus": "Ruck (long)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "9\u201310 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:45\u201315:15 per mile"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "255\u2013260 lb"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Front Squat",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "~185\u2013190 lb"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "KB Swings",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 6,
+        "focus": "Full Body + Easy Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "16:00\u201317:00 per mile"
+    },
+    {
+        "w": 5,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 5,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "205 lb"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Pull-ups (Weighted)",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "BW+"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "5\u20137",
+        "defaultLoad": "110 lb"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Close-grip Bench/Dips",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "EZ/BB Curls",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 2,
+        "focus": "Ruck (threshold)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "5\u20136 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:30\u201315:00 per mile (hold steady)"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "~200 lb"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "270 lb",
+        "defaultNote": "Only if back feels good; otherwise stay lighter"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 4,
+        "focus": "Upper Hypertrophy",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 5,
+        "focus": "Ruck (long rehearsal)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "10\u201312 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:45\u201315:15 per mile"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "~260 lb"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Front Squat",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "~185\u2013190 lb"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 6,
+        "focus": "Full Body (lighter) + Optional Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1\u20132 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Very easy, 16:00\u201317:00 per mile"
+    },
+    {
+        "w": 6,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201340 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 6,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Stretching",
+        "defaultSets": 1,
+        "defaultReps": "10\u201315 min",
+        "defaultLoad": "-",
+        "defaultNote": "Hip flexors, hamstrings, calves, chest"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bench Press",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "210 lb"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Pull-ups (Weighted)",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "BW+"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Barbell Row",
+        "defaultSets": 4,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "110\u2013115 lb",
+        "defaultNote": "Only with pristine form"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Close-grip Bench/Dips",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "EZ/BB Curls",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Bird-dog",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 1,
+        "focus": "Upper Strength",
+        "ex": "Dead bug",
+        "defaultSets": 3,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 2,
+        "focus": "Ruck (pace)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "6 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:15\u201314:45 per mile (slightly faster than goal pace)"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Front Squat",
+        "defaultSets": 4,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "~205 lb"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20136",
+        "defaultLoad": "~270 lb",
+        "defaultNote": "Or stay at Week 6 load if back complains"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Reverse Lunges",
+        "defaultSets": 3,
+        "defaultReps": "8/leg",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Hip Thrust",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Calf Raises",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Planks",
+        "defaultSets": 3,
+        "defaultReps": "20-30 sec",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Side planks",
+        "defaultSets": 2,
+        "defaultReps": "20 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 3,
+        "focus": "Lower Strength",
+        "ex": "Chest stretch (doorway)",
+        "defaultSets": 2,
+        "defaultReps": "30 sec/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Incline DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-",
+        "defaultNote": "Avoid failure; solid work not destroyed"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "1-arm DB Row",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 3,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Lateral Raises",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Face Pulls",
+        "defaultSets": 3,
+        "defaultReps": "12\u201315",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Hammer Curls",
+        "defaultSets": 3,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Band pull-aparts",
+        "defaultSets": 3,
+        "defaultReps": "15-20",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 4,
+        "focus": "Upper Hypertrophy (moderate)",
+        "ex": "Wall slides",
+        "defaultSets": 3,
+        "defaultReps": "10-12",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 5,
+        "focus": "Long Ruck Peak",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "14\u201315 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 14:45\u201315:15 per mile. Aim to simulate event nutrition/hydration"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "3\u20135",
+        "defaultLoad": "~260\u2013270 lb"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Front Squat",
+        "defaultSets": 3,
+        "defaultReps": "6",
+        "defaultLoad": "~185 lb"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "6\u20138",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Light DB Bench",
+        "defaultSets": 3,
+        "defaultReps": "8\u201310",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Bird-dog",
+        "defaultSets": 2,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Dead bug",
+        "defaultSets": 2,
+        "defaultReps": "8/side",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 7,
+        "d": 6,
+        "focus": "Full Body (very moderate) + No/Tiny Ruck",
+        "ex": "Ruck March (Optional)",
+        "defaultSets": 1,
+        "defaultReps": "1 mile",
+        "defaultLoad": "25 lb",
+        "defaultNote": "For stiffness only, or skip"
+    },
+    {
+        "w": 7,
+        "d": 7,
+        "focus": "Recovery",
+        "ex": "Mobility / Sleep",
+        "defaultSets": 1,
+        "defaultReps": "30 min",
+        "defaultLoad": "-",
+        "defaultNote": "Extra mobility and sleep; no hard work."
+    },
+    {
+        "w": 8,
+        "d": 1,
+        "focus": "Upper Deload",
+        "ex": "Bench Press",
+        "defaultSets": 3,
+        "defaultReps": "5",
+        "defaultLoad": "175 lb"
+    },
+    {
+        "w": 8,
+        "d": 1,
+        "focus": "Upper Deload",
+        "ex": "Pull-ups",
+        "defaultSets": 3,
+        "defaultReps": "Easy",
+        "defaultLoad": "-",
+        "defaultNote": "Stop well before failure"
+    },
+    {
+        "w": 8,
+        "d": 1,
+        "focus": "Upper Deload",
+        "ex": "OHP",
+        "defaultSets": 3,
+        "defaultReps": "6",
+        "defaultLoad": "85\u201395 lb"
+    },
+    {
+        "w": 8,
+        "d": 1,
+        "focus": "Upper Deload",
+        "ex": "Rows/Triceps/Curls",
+        "defaultSets": 2,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "Very Light"
+    },
+    {
+        "w": 8,
+        "d": 1,
+        "focus": "Upper Deload",
+        "ex": "Posture Work",
+        "defaultSets": 1,
+        "defaultReps": "5\u201310 min",
+        "defaultLoad": "-",
+        "defaultNote": "Band pull-aparts, wall slides, chest stretch"
+    },
+    {
+        "w": 8,
+        "d": 2,
+        "focus": "Ruck (light)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "4\u20135 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:00\u201315:45 per mile (smooth and relaxed)"
+    },
+    {
+        "w": 8,
+        "d": 3,
+        "focus": "Lower Deload",
+        "ex": "Front Squat",
+        "defaultSets": 3,
+        "defaultReps": "5",
+        "defaultLoad": "~165\u2013175 lb"
+    },
+    {
+        "w": 8,
+        "d": 3,
+        "focus": "Lower Deload",
+        "ex": "Trap-bar Deadlift",
+        "defaultSets": 3,
+        "defaultReps": "4\u20135",
+        "defaultLoad": "~225\u2013235 lb"
+    },
+    {
+        "w": 8,
+        "d": 3,
+        "focus": "Lower Deload",
+        "ex": "Reverse Lunges",
+        "defaultSets": 2,
+        "defaultReps": "8/leg",
+        "defaultLoad": "Light"
+    },
+    {
+        "w": 8,
+        "d": 3,
+        "focus": "Lower Deload",
+        "ex": "Calf Raises",
+        "defaultSets": 2,
+        "defaultReps": "10\u201312",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 8,
+        "d": 3,
+        "focus": "Lower Deload",
+        "ex": "Easy Core",
+        "defaultSets": 2,
+        "defaultReps": "8/side",
+        "defaultLoad": "-",
+        "defaultNote": "Bird-dog, Dead bug"
+    },
+    {
+        "w": 8,
+        "d": 4,
+        "focus": "Upper Light",
+        "ex": "Incline DB Bench",
+        "defaultSets": 2,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "Easy"
+    },
+    {
+        "w": 8,
+        "d": 4,
+        "focus": "Upper Light",
+        "ex": "1-arm DB Row",
+        "defaultSets": 2,
+        "defaultReps": "8\u201312/side",
+        "defaultLoad": "Easy"
+    },
+    {
+        "w": 8,
+        "d": 4,
+        "focus": "Upper Light",
+        "ex": "DB Shoulder Press",
+        "defaultSets": 2,
+        "defaultReps": "8\u201312",
+        "defaultLoad": "Easy"
+    },
+    {
+        "w": 8,
+        "d": 4,
+        "focus": "Upper Light",
+        "ex": "Posture Work",
+        "defaultSets": 1,
+        "defaultReps": "5\u201310 min",
+        "defaultLoad": "-"
+    },
+    {
+        "w": 8,
+        "d": 5,
+        "focus": "Ruck (final tune-up)",
+        "ex": "Ruck March",
+        "defaultSets": 1,
+        "defaultReps": "6\u20138 miles",
+        "defaultLoad": "25 lb",
+        "defaultNote": "Target pace: 15:00\u201315:45 per mile"
+    },
+    {
+        "w": 8,
+        "d": 6,
+        "focus": "Rest / Very Light",
+        "ex": "Easy Walk",
+        "defaultSets": 1,
+        "defaultReps": "20\u201330 min",
+        "defaultLoad": "-",
+        "defaultNote": "Easy walk, stretching only"
+    },
+    {
+        "w": 8,
+        "d": 7,
+        "focus": "Event Week",
+        "ex": "Easy Walk",
+        "defaultSets": 2,
+        "defaultReps": "20\u201330 min",
+        "defaultLoad": "-",
+        "defaultNote": "Short easy walks, some posture/core. Sleep, hydrate."
     }
-})();
+];
 
 // Helper to find exercise data from UID
 function getExerciseFromUid(uid) {
@@ -895,16 +3418,19 @@ function renderStrengthOverview() {
         <div style="margin-bottom:15px;">
             <div style="font-weight:bold;color:var(--primary);">Weekly Structure</div>
             <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
-                <li><strong>Day 1: Upper Body Strength</strong> (Bench, Pull-ups, Rows, OHP)</li>
-                <li><strong>Day 3: Lower Body Strength</strong> (Squat, Deadlift, Lunges, Plank)</li>
-                <li><strong>Day 5: Conditioning</strong> (High rep calisthenics & KB work)</li>
+                <li><strong>Day 1:</strong> Upper Strength + Posture</li>
+                <li><strong>Day 2:</strong> Short Ruck</li>
+                <li><strong>Day 3:</strong> Lower Strength + Core</li>
+                <li><strong>Day 4:</strong> Upper Hypertrophy</li>
+                <li><strong>Day 5:</strong> Long Ruck</li>
+                <li><strong>Day 6:</strong> Full Body + Optional Ruck</li>
             </ul>
             
             <div style="font-weight:bold;color:var(--primary);">Progression Guidelines</div>
             <ul style="margin:5px 0 0 20px;padding:0;color:var(--text);font-size:0.9rem;">
-                <li><strong>Main Lifts:</strong> Aim to increase weight by 5-10lbs every 1-2 weeks when you hit the top end of the rep range with good form.</li>
-                <li><strong>Bodyweight Moves:</strong> Add reps or decrease rest times.</li>
-                <li><strong>Deload:</strong> If performance stalls for 2 weeks, reduce weight by 10% and build back up.</li>
+                <li><strong>Strength:</strong> Follow the prescribed sets/reps. Increase weight when you hit the top of the rep range with good form.</li>
+                <li><strong>Rucking:</strong> Focus on pace and posture. Do not run with weight unless specified.</li>
+                <li><strong>Recovery:</strong> Sleep and nutrition are key. Take the recovery days seriously.</li>
             </ul>
         </div>
     `;
@@ -940,19 +3466,21 @@ function renderOverview() {
     // Group by week
     for(let w=1; w<=8; w++) {
         const weekWorkouts = workoutData.filter(i => i.w === w);
-        // Find Ruck distances
-        const ruckShort = weekWorkouts.find(i => i.d === 2);
-        const ruckLong = weekWorkouts.find(i => i.d === 6);
+        // Find Ruck distances (Short on D2, Long on D5)
+        const ruckShort = weekWorkouts.find(i => i.d === 2 && i.ex === 'Ruck March');
+        const ruckLong = weekWorkouts.find(i => i.d === 5 && i.ex === 'Ruck March');
         
-        let ruckDesc = 'Focus: Build Base';
+        let ruckDesc = 'Focus: Strength & Ruck';
         if(ruckShort && ruckLong) {
             ruckDesc = `Rucks: ${ruckShort.defaultReps} & ${ruckLong.defaultReps}`;
+        } else if (ruckShort) {
+            ruckDesc = `Ruck: ${ruckShort.defaultReps}`;
         }
         
         html += `<div style="margin-bottom:15px;border-bottom:1px solid var(--border);padding-bottom:10px;">
             <div style="font-weight:bold;color:var(--primary);margin-bottom:5px;">Week ${w}</div>
             <div style="font-size:0.9rem;color:var(--text);">${ruckDesc}</div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Strength: 3x sessions • Conditioning: 1x session</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">4x Lifting Sessions • 2x Rucks</div>
         </div>`;
     }
     
