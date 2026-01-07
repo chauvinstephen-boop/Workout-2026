@@ -75,6 +75,26 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 /* Target info badge */
 .target-badge { font-size:0.75rem; color:#64748b; background:var(--bg); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:normal; }
 
+/* Completion Modal Styles */
+.completion-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:600; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.completion-modal { background:var(--card); border-radius:12px; padding:30px; max-width:400px; width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.completion-modal h3 { margin:0 0 20px 0; color:var(--text); font-size:1.3rem; }
+.completion-modal-buttons { display:flex; flex-direction:column; gap:12px; margin-bottom:20px; }
+.completion-modal-buttons button { padding:14px 24px; border:none; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; transition:opacity 0.2s; }
+.completion-modal-buttons button:hover { opacity:0.9; }
+.completion-modal-buttons button:active { opacity:0.8; }
+.btn-confirm-complete { background:var(--success); color:white; }
+.btn-mark-previous { background:var(--primary); color:white; }
+.btn-cancel { background:#64748b; color:white; }
+.date-picker-section { display:none; margin-top:20px; }
+.date-picker-section.active { display:block; }
+.date-picker-section label { display:block; margin-bottom:8px; color:var(--text); font-weight:600; }
+.date-picker-section input[type="date"] { width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; font-size:1rem; background:var(--bg); color:var(--text); }
+.date-picker-section .date-buttons { display:flex; gap:10px; margin-top:15px; }
+.date-picker-section .date-buttons button { flex:1; padding:12px; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer; }
+.btn-submit-date { background:var(--success); color:white; }
+.btn-cancel-date { background:#64748b; color:white; }
+
 </style>
 </head>
 <body>
@@ -112,6 +132,26 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 <div id="undo-toast" class="undo-toast" style="display:none;">
     <span id="undo-message">Set deleted</span>
     <button onclick="undoDelete()">Undo</button>
+</div>
+
+<!-- Completion Modal -->
+<div id="completion-modal-overlay" class="completion-modal-overlay" style="display:none;" onclick="if(event.target===this) closeCompletionModal();">
+    <div class="completion-modal" onclick="event.stopPropagation();">
+        <h3>Complete Workout</h3>
+        <div class="completion-modal-buttons" id="completion-main-buttons">
+            <button class="btn-confirm-complete" onclick="confirmCompleteWorkout()">Confirm Complete</button>
+            <button class="btn-mark-previous" onclick="showDatePicker()">Mark Previously Complete</button>
+            <button class="btn-cancel" onclick="closeCompletionModal()">Cancel</button>
+        </div>
+        <div class="date-picker-section" id="date-picker-section">
+            <label for="completion-date-picker">Select the date you completed this workout:</label>
+            <input type="date" id="completion-date-picker" max="">
+            <div class="date-buttons">
+                <button class="btn-submit-date" onclick="markPreviouslyComplete()">Mark Complete</button>
+                <button class="btn-cancel-date" onclick="hideDatePicker()">Cancel</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="view-workout" class="view-container">
@@ -1695,6 +1735,16 @@ function renderWorkout(){
         <div class="input-group"><input type="text" placeholder="Notes" value="${savedNote}" oninput="saveNote('${uid}',this.value)" aria-label="Exercise notes"></div>`;
         container.appendChild(card);
     });
+    
+    // Add Complete Workout button at the end
+    const completeButtonDiv = document.createElement('div');
+    completeButtonDiv.style.marginTop = '30px';
+    completeButtonDiv.style.paddingTop = '20px';
+    completeButtonDiv.style.borderTop = '2px solid var(--border)';
+    completeButtonDiv.style.textAlign = 'center';
+    completeButtonDiv.innerHTML = `<button onclick="showCompletionModal()" style="background:var(--success);color:white;border:none;padding:14px 32px;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(16,185,129,0.3);">✓ Complete Workout</button>`;
+    container.appendChild(completeButtonDiv);
+    
     updateSummary();
 }
 
@@ -1858,6 +1908,105 @@ function undoDelete() {
     } catch (e) {
         alert("Error undoing: " + e.message);
     }
+}
+
+// Workout Completion Functions
+function showCompletionModal() {
+    const overlay = document.getElementById('completion-modal-overlay');
+    const datePicker = document.getElementById('completion-date-picker');
+    
+    // Set max date to today
+    const today = new Date();
+    const maxDate = today.toISOString().split('T')[0];
+    datePicker.max = maxDate;
+    
+    // Reset modal state
+    document.getElementById('date-picker-section').classList.remove('active');
+    document.getElementById('completion-main-buttons').style.display = 'flex';
+    
+    overlay.style.display = 'flex';
+}
+
+function closeCompletionModal() {
+    document.getElementById('completion-modal-overlay').style.display = 'none';
+    hideDatePicker();
+}
+
+function showDatePicker() {
+    document.getElementById('completion-main-buttons').style.display = 'none';
+    document.getElementById('date-picker-section').classList.add('active');
+    
+    // Set default date to today
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    document.getElementById('completion-date-picker').value = todayStr;
+}
+
+function hideDatePicker() {
+    document.getElementById('date-picker-section').classList.remove('active');
+    document.getElementById('completion-main-buttons').style.display = 'flex';
+}
+
+function confirmCompleteWorkout() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const dStr = String(now.getDate()).padStart(2, '0');
+    const today = `${y}-${m}-${dStr}`;
+    
+    markWorkoutAsComplete(today);
+}
+
+function markPreviouslyComplete() {
+    const datePicker = document.getElementById('completion-date-picker');
+    const selectedDate = datePicker.value;
+    
+    if (!selectedDate) {
+        alert('Please select a date');
+        return;
+    }
+    
+    // Validate that the date is not in the future
+    const selected = new Date(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selected.setHours(0, 0, 0, 0);
+    
+    if (selected > today) {
+        alert('Cannot mark workout as complete for a future date');
+        return;
+    }
+    
+    markWorkoutAsComplete(selectedDate);
+}
+
+function markWorkoutAsComplete(dateStr) {
+    const completionKey = `completion_date_w${currentWeek}_d${currentDay}`;
+    
+    // Store completion date first to prevent checkAndLogDayCompletion from overwriting it
+    localStorage.setItem(completionKey, dateStr);
+    
+    // Mark all sets as done for this day
+    const dayItems = workoutData.filter(item => item.w === currentWeek && item.d === currentDay);
+    
+    dayItems.forEach((item, index) => {
+        const itemUid = `w${currentWeek}-d${currentDay}-i${index}`;
+        const sets = getCurrentSetsState(itemUid);
+        
+        // Mark all sets as done
+        sets.forEach((set, setIdx) => {
+            if (!set.done) {
+                set.done = true;
+            }
+        });
+        
+        // Save the updated sets
+        localStorage.setItem(itemUid + '_sets', JSON.stringify(sets));
+    });
+    
+    // Close modal and refresh
+    closeCompletionModal();
+    renderWorkout();
 }
 
 function saveNote(id,text){localStorage.setItem(id+'_note',text);}
