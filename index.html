@@ -75,6 +75,10 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 /* Target info badge */
 .target-badge { font-size:0.75rem; color:#64748b; background:var(--bg); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:normal; }
 
+/* Safari/iOS Chart Fixes */
+canvas { -webkit-transform: translateZ(0); transform: translateZ(0); }
+.charts-grid canvas { display: block; max-width: 100%; height: auto; }
+
 /* Completion Modal Styles */
 .completion-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:600; display:flex; flex-direction:column; justify-content:center; align-items:center; }
 .completion-modal { background:var(--card); border-radius:12px; padding:30px; max-width:400px; width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
@@ -863,7 +867,9 @@ function renderAnalytics() {
         const wrapper = document.createElement('div');
         wrapper.className = 'summary-card';
         wrapper.style.padding = '10px';
-        wrapper.innerHTML = `<div style="font-size:0.8rem;font-weight:bold;margin-bottom:5px;">${lift} (Est. 1RM)</div><canvas id="chart-${lift.replace(/\s/g,'')}"></canvas>`;
+        wrapper.style.position = 'relative';
+        wrapper.style.height = '250px';
+        wrapper.innerHTML = `<div style="font-size:0.8rem;font-weight:bold;margin-bottom:5px;">${lift} (Est. 1RM)</div><div style="position:relative;height:200px;"><canvas id="chart-${lift.replace(/\s/g,'')}" style="max-width:100%;height:200px;"></canvas></div>`;
         liftsContainer.appendChild(wrapper);
     });
     
@@ -872,7 +878,9 @@ function renderAnalytics() {
     ruckWrapper.className = 'summary-card';
     ruckWrapper.style.padding = '10px';
     ruckWrapper.style.marginTop = '15px';
-    ruckWrapper.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Rucking Volume (Miles)</div><canvas id="chart-ruck"></canvas>`;
+    ruckWrapper.style.position = 'relative';
+    ruckWrapper.style.height = '300px';
+    ruckWrapper.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Rucking Volume (Miles)</div><div style="position:relative;height:250px;"><canvas id="chart-ruck" style="max-width:100%;height:250px;"></canvas></div>`;
     
     container.appendChild(liftsContainer);
     container.appendChild(ruckWrapper);
@@ -886,7 +894,7 @@ function renderAnalytics() {
         standardsContainer.style.marginTop = '15px';
         
         standardsContainer.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Strength Comparison (vs BW: ${bw}lb)</div>
-        <div style="height:300px;"><canvas id="chart-standards"></canvas></div>
+        <div style="position:relative;height:300px;"><canvas id="chart-standards" style="max-width:100%;height:300px;"></canvas></div>
         <div style="font-size:0.7rem;color:#64748b;margin-top:5px;text-align:center;">Based on general strength standards multipliers</div>`;
         
         container.appendChild(standardsContainer);
@@ -960,8 +968,11 @@ function renderAnalytics() {
         }
     });
     
-    // Render Standards Chart if BW exists
-    if (!isNaN(bw) && bw > 0) {
+    // Use requestAnimationFrame and setTimeout to ensure DOM is fully laid out before rendering charts (Safari/iOS fix)
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            // Render Standards Chart if BW exists
+            if (!isNaN(bw) && bw > 0) {
         // Multipliers (Approximate male/female standards)
         const gender = localStorage.getItem('userGender') || 'male';
         
@@ -991,27 +1002,31 @@ function renderAnalytics() {
         const intVals = lifts.map(l => Math.round(bw * standards[l].int));
         const advVals = lifts.map(l => Math.round(bw * standards[l].adv));
         
-        chartInstances['chart-standards'] = new Chart(document.getElementById('chart-standards').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'You', data: userVals, backgroundColor: '#2563eb', borderRadius: 4 },
-                    { label: 'Beginner', data: begVals, backgroundColor: '#94a3b8', borderRadius: 4, hidden: true },
-                    { label: 'Intermediate', data: intVals, backgroundColor: '#fbbf24', borderRadius: 4 },
-                    { label: 'Advanced', data: advVals, backgroundColor: '#f87171', borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, title: {display:true, text:'Weight (lbs)'} } },
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: { display: true, text: `Standards for ${gender.charAt(0).toUpperCase() + gender.slice(1)}` }
+        const standardsCanvas = document.getElementById('chart-standards');
+        if (standardsCanvas) {
+            chartInstances['chart-standards'] = new Chart(standardsCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'You', data: userVals, backgroundColor: '#2563eb', borderRadius: 4 },
+                        { label: 'Beginner', data: begVals, backgroundColor: '#94a3b8', borderRadius: 4, hidden: true },
+                        { label: 'Intermediate', data: intVals, backgroundColor: '#fbbf24', borderRadius: 4 },
+                        { label: 'Advanced', data: advVals, backgroundColor: '#f87171', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    devicePixelRatio: window.devicePixelRatio || 1,
+                    scales: { y: { beginAtZero: true, title: {display:true, text:'Weight (lbs)'} } },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: `Standards for ${gender.charAt(0).toUpperCase() + gender.slice(1)}` }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     
     // Render Lift Charts
@@ -1019,7 +1034,10 @@ function renderAnalytics() {
     
     lifts.forEach(lift => {
         const chartId = `chart-${lift.replace(/\s/g,'')}`;
-        const ctx = document.getElementById(chartId).getContext('2d');
+        const canvas = document.getElementById(chartId);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
         const data = [];
         for(let w=1; w<=8; w++) {
             data.push(weeklyMaxes[w][lift] || 0); // 0 means no data for that week
@@ -1038,6 +1056,8 @@ function renderAnalytics() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                devicePixelRatio: window.devicePixelRatio || 1,
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { display: true, ticks: {font:{size:10}} },
@@ -1048,32 +1068,39 @@ function renderAnalytics() {
     });
     
     // Render Ruck Chart
-    const ruckCtx = document.getElementById('chart-ruck').getContext('2d');
-    const ruckData = [];
-    for(let w=1; w<=8; w++) {
-        ruckData.push(weeklyRuck[w]);
-    }
-    
-    chartInstances['chart-ruck'] = new Chart(ruckCtx, {
-        type: 'line',
-        data: {
-            labels: weeksLabel,
-            datasets: [{
-                label: 'Miles',
-                data: ruckData,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true }
-            }
+    const ruckCanvas = document.getElementById('chart-ruck');
+    if (ruckCanvas) {
+        const ruckCtx = ruckCanvas.getContext('2d');
+        const ruckData = [];
+        for(let w=1; w<=8; w++) {
+            ruckData.push(weeklyRuck[w]);
         }
+        
+        chartInstances['chart-ruck'] = new Chart(ruckCtx, {
+            type: 'line',
+            data: {
+                labels: weeksLabel,
+                datasets: [{
+                    label: 'Miles',
+                    data: ruckData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                devicePixelRatio: window.devicePixelRatio || 1,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+        }, 100); // Small delay to ensure layout is complete on Safari/iOS
     });
 }
 
