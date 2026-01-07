@@ -75,6 +75,11 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
 /* Target info badge */
 .target-badge { font-size:0.75rem; color:#64748b; background:var(--bg); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:normal; }
 
+/* Workout section divider (e.g. Posture work) */
+.workout-section-divider { display:flex; align-items:center; gap:10px; margin:12px 0 16px; color:#64748b; font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; }
+.workout-section-divider::before, .workout-section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+body[data-theme="dark"] .workout-section-divider { color:#94a3b8; }
+
 </style>
 </head>
 <body>
@@ -222,6 +227,36 @@ body[data-theme="dark"] .prev-val { background: #1e3a8a; border-color: #2563eb; 
             <option value="female">Female</option>
         </select>
     </div>
+    <div style="margin-bottom:20px;">
+        <div style="display:block;margin-bottom:8px;font-weight:bold;">Main lift 1RM (lbs)</div>
+        <div style="font-size:0.85rem;color:#64748b;margin-bottom:10px;line-height:1.3;">
+            Used to calculate 5/3/1 working sets (based on a 90% Training Max).
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+            <div>
+                <label style="display:block;margin-bottom:5px;font-weight:600;">Bench Press 1RM</label>
+                <input type="number" id="user-1rm-bench" placeholder="e.g. 225" oninput="saveOneRM('Bench Press', this.value)" style="width:100%;padding:10px;font-size:1rem;">
+            </div>
+            <div>
+                <label style="display:block;margin-bottom:5px;font-weight:600;">Squat 1RM</label>
+                <input type="number" id="user-1rm-squat" placeholder="e.g. 315" oninput="saveOneRM('Squat', this.value)" style="width:100%;padding:10px;font-size:1rem;">
+            </div>
+            <div>
+                <label style="display:block;margin-bottom:5px;font-weight:600;">Deadlift 1RM</label>
+                <input type="number" id="user-1rm-deadlift" placeholder="e.g. 405" oninput="saveOneRM('Deadlift', this.value)" style="width:100%;padding:10px;font-size:1rem;">
+            </div>
+            <div>
+                <label style="display:block;margin-bottom:5px;font-weight:600;">OHP 1RM (Standing)</label>
+                <input type="number" id="user-1rm-ohp" placeholder="e.g. 155" oninput="saveOneRM('Standing OHP', this.value)" style="width:100%;padding:10px;font-size:1rem;">
+            </div>
+        </div>
+        <button onclick="updateOneRMsFromLogs()" style="margin-top:12px;width:100%;background:var(--primary);color:white;border:none;padding:10px 12px;border-radius:8px;font-weight:700;cursor:pointer;">
+            Update 1RM estimates from logged workouts
+        </button>
+        <div style="font-size:0.8rem;color:#64748b;margin-top:6px;line-height:1.3;">
+            This is optional and will only update lifts that have completed sets logged.
+        </div>
+    </div>
     <div class="home-btn" onclick="toggleTheme()" style="margin-bottom:10px;">🌙 Toggle Dark Mode</div>
     <div class="home-btn" onclick="exportNotes()" style="margin-bottom:10px;">📝 Export Notes</div>
     <div class="home-btn" onclick="exportAllData()" style="margin-bottom:10px;">💾 Export All Data</div>
@@ -250,8 +285,8 @@ const workoutData = [
     {w:1, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"3 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:45-16:30 per mile (easy-moderate; focus on posture)"},
     
     // Wednesday - Lower Strength (S1-friendly) + Core
-    {w:1, d:3, focus:"Lower Strength + Core", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~175 lb", defaultNote:"Light-moderate"},
-    {w:1, d:3, focus:"Lower Strength + Core", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb", defaultNote:"Submaximal, perfect form"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~175 lb", defaultNote:"Light-moderate"},
+    {w:1, d:3, focus:"Lower Strength + Core", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb", defaultNote:"Trap bar OK. Submaximal, perfect form"},
     {w:1, d:3, focus:"Lower Strength + Core", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:1, d:3, focus:"Lower Strength + Core", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"Or glute bridge"},
     {w:1, d:3, focus:"Lower Strength + Core", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
@@ -273,8 +308,8 @@ const workoutData = [
     {w:1, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:45-16:30 per mile (steady, nasal breathing if possible)"},
     
     // Saturday - Full Body + Optional Easy Ruck
-    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb"},
-    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"235 lb", defaultNote:"Trap bar OK"},
+    {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
     {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups/Chin-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:1, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"If tolerated, 2-3 sets"},
@@ -303,8 +338,8 @@ const workoutData = [
     {w:2, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"3.5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:30-16:15 per mile"},
     
     // Wednesday - Lower Strength
-    {w:2, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~180 lb"},
-    {w:2, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~180 lb"},
+    {w:2, d:3, focus:"Lower Strength", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb", defaultNote:"Trap bar OK"},
     {w:2, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:2, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
     {w:2, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
@@ -326,8 +361,8 @@ const workoutData = [
     {w:2, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:30-16:15 per mile"},
     
     // Saturday - Full Body + Optional Ruck
-    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb"},
-    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"240 lb", defaultNote:"Trap bar OK"},
+    {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
     {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups/Chin-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:2, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
@@ -356,8 +391,8 @@ const workoutData = [
     {w:3, d:2, focus:"Ruck (Short/Pace Work)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace overall: 15:00-15:45 per mile. Built as: 5 × 6 min near 14:30-15:00 per mile / 4 min easy between, plus warm-up/cool-down"},
     
     // Wednesday - Lower Strength
-    {w:3, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~185 lb"},
-    {w:3, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~185 lb"},
+    {w:3, d:3, focus:"Lower Strength", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb", defaultNote:"Trap bar OK"},
     {w:3, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:3, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
     {w:3, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
@@ -379,8 +414,8 @@ const workoutData = [
     {w:3, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"7 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:00-15:45 per mile"},
     
     // Saturday - Full Body + Optional Ruck
-    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb"},
-    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"250 lb", defaultNote:"Trap bar OK"},
+    {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
     {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:3, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
@@ -409,8 +444,8 @@ const workoutData = [
     {w:4, d:2, focus:"Ruck (Short)", ex:"Ruck March", defaultSets:1, defaultReps:"5-6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:30 per mile"},
     
     // Wednesday - Lower Strength
-    {w:4, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~190-195 lb"},
-    {w:4, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Squat", defaultSets:4, defaultReps:"5-8", defaultLoad:"~190-195 lb"},
+    {w:4, d:3, focus:"Lower Strength", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb", defaultNote:"Trap bar OK"},
     {w:4, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:4, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"10-12", defaultLoad:"Moderate"},
     {w:4, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate"},
@@ -432,8 +467,8 @@ const workoutData = [
     {w:4, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"8-9 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:30 per mile (big jump in distance)"},
     
     // Saturday - Full Body + Optional Ruck
-    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb"},
-    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"5-6", defaultLoad:"255-260 lb", defaultNote:"Trap bar OK"},
+    {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate", defaultNote:"Or goblet squat"},
     {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:4, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
@@ -463,8 +498,8 @@ const workoutData = [
     {w:5, d:2, focus:"Ruck (Threshold)", ex:"Ruck March", defaultSets:1, defaultReps:"5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:30-15:00 per mile (close to event pace but controlled)"},
     
     // Wednesday - Lower Strength (heavier)
-    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~195 lb"},
-    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~195 lb"},
+    {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb", defaultNote:"Trap bar OK"},
     {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:5, d:3, focus:"Lower Strength (Heavier)", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
@@ -486,8 +521,8 @@ const workoutData = [
     {w:5, d:5, focus:"Ruck (Long)", ex:"Ruck March", defaultSets:1, defaultReps:"9-10 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile"},
     
     // Saturday - Full Body + Easy Ruck (optional)
-    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb"},
-    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"255-260 lb", defaultNote:"Trap bar OK"},
+    {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
     {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:5, d:6, focus:"Full Body + Optional Ruck", ex:"KB Swings", defaultSets:3, defaultReps:"12-15", defaultLoad:"Moderate", defaultNote:"2-3 sets"},
@@ -516,8 +551,8 @@ const workoutData = [
     {w:6, d:2, focus:"Ruck (Threshold)", ex:"Ruck March", defaultSets:1, defaultReps:"5-6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:30-15:00 per mile (hold steady pace)"},
     
     // Wednesday - Lower Strength
-    {w:6, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~200 lb"},
-    {w:6, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"270 lb", defaultNote:"Only if back feels good; otherwise stay lighter"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~200 lb"},
+    {w:6, d:3, focus:"Lower Strength", ex:"Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"270 lb", defaultNote:"Trap bar OK. Only if back feels good; otherwise stay lighter"},
     {w:6, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:6, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:6, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
@@ -539,8 +574,8 @@ const workoutData = [
     {w:6, d:5, focus:"Ruck (Long Rehearsal)", ex:"Ruck March", defaultSets:1, defaultReps:"10-12 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile"},
     
     // Saturday - Full Body (lighter) + Optional Ruck
-    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~260 lb"},
-    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Front Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~260 lb", defaultNote:"Trap bar OK"},
+    {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Squat", defaultSets:3, defaultReps:"6-8", defaultLoad:"~185-190 lb"},
     {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Pull-ups", defaultSets:3, defaultReps:"6-10", defaultLoad:"BW"},
     {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"DB Bench", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:6, d:6, focus:"Full Body (Lighter) + Optional Ruck", ex:"Bird-Dog", defaultSets:3, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Core/light accessories"},
@@ -568,8 +603,8 @@ const workoutData = [
     {w:7, d:2, focus:"Ruck (Pace)", ex:"Ruck March", defaultSets:1, defaultReps:"6 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:15-14:45 per mile (slightly faster than goal pace for segments)"},
     
     // Wednesday - Lower Strength
-    {w:7, d:3, focus:"Lower Strength", ex:"Front Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~205 lb"},
-    {w:7, d:3, focus:"Lower Strength", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~270 lb", defaultNote:"Or stay at Week 6 load if back complains"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Squat", defaultSets:4, defaultReps:"4-6", defaultLoad:"~205 lb"},
+    {w:7, d:3, focus:"Lower Strength", ex:"Deadlift", defaultSets:3, defaultReps:"4-6", defaultLoad:"~270 lb", defaultNote:"Trap bar OK. Or stay at Week 6 load if back complains"},
     {w:7, d:3, focus:"Lower Strength", ex:"Reverse Lunges (DBs)", defaultSets:3, defaultReps:"8/leg", defaultLoad:"Moderate"},
     {w:7, d:3, focus:"Lower Strength", ex:"Hip Thrust", defaultSets:3, defaultReps:"8-10", defaultLoad:"Moderate"},
     {w:7, d:3, focus:"Lower Strength", ex:"Standing Calf Raises", defaultSets:4, defaultReps:"10-12", defaultLoad:"Moderate", defaultNote:"3-4 sets"},
@@ -591,8 +626,8 @@ const workoutData = [
     {w:7, d:5, focus:"Long Ruck Peak", ex:"Ruck March", defaultSets:1, defaultReps:"14-15 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 14:45-15:15 per mile (aim to simulate event nutrition/hydration)"},
     
     // Saturday - Full Body (very moderate) + No or Tiny Ruck
-    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"3-5", defaultLoad:"~260-270 lb"},
-    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Front Squat", defaultSets:3, defaultReps:"6", defaultLoad:"~185 lb"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Deadlift", defaultSets:3, defaultReps:"3-5", defaultLoad:"~260-270 lb", defaultNote:"Trap bar OK"},
+    {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Squat", defaultSets:3, defaultReps:"6", defaultLoad:"~185 lb"},
     {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Pull-ups", defaultSets:3, defaultReps:"6-8", defaultLoad:"BW", defaultNote:"2-3 sets"},
     {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"DB Bench (Light)", defaultSets:3, defaultReps:"8-10", defaultLoad:"Light", defaultNote:"2-3 sets"},
     {w:7, d:6, focus:"Full Body (Very Moderate)", ex:"Bird-Dog", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Quick core/posture"},
@@ -619,8 +654,8 @@ const workoutData = [
     {w:8, d:2, focus:"Ruck (Light)", ex:"Ruck March", defaultSets:1, defaultReps:"4-5 miles", defaultLoad:"25 lb", defaultNote:"Target pace: 15:00-15:45 per mile (smooth and relaxed)"},
     
     // Wednesday - Lower Deload
-    {w:8, d:3, focus:"Lower Deload", ex:"Front Squat", defaultSets:3, defaultReps:"5", defaultLoad:"~165-175 lb"},
-    {w:8, d:3, focus:"Lower Deload", ex:"Trap-Bar Deadlift", defaultSets:3, defaultReps:"4-5", defaultLoad:"~225-235 lb", defaultNote:"2-3 sets"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Squat", defaultSets:3, defaultReps:"5", defaultLoad:"~165-175 lb"},
+    {w:8, d:3, focus:"Lower Deload", ex:"Deadlift", defaultSets:3, defaultReps:"4-5", defaultLoad:"~225-235 lb", defaultNote:"Trap bar OK. 2-3 sets"},
     {w:8, d:3, focus:"Lower Deload", ex:"Reverse Lunges (Light)", defaultSets:2, defaultReps:"8/leg", defaultLoad:"Light"},
     {w:8, d:3, focus:"Lower Deload", ex:"Standing Calf Raises", defaultSets:2, defaultReps:"10-12", defaultLoad:"Light"},
     {w:8, d:3, focus:"Lower Deload", ex:"Bird-Dog", defaultSets:2, defaultReps:"8/side", defaultLoad:"BW", defaultNote:"Easy core"},
@@ -647,6 +682,75 @@ const workoutData = [
     {w:8, d:7, focus:"Event Week Prep", ex:"Light Posture/Core", defaultSets:2, defaultReps:"5-10 min", defaultLoad:"-", defaultNote:"Very light posture and core work"},
     {w:8, d:7, focus:"Event Week Prep", ex:"Rest & Nutrition", defaultSets:1, defaultReps:"-", defaultLoad:"-", defaultNote:"Sleep, hydrate, keep carbs and sodium up per your nutrition plan. No rucks."}
 ];
+
+// 5/3/1 (Wendler) settings + helpers
+const MAIN_LIFTS = ['Bench Press', 'Squat', 'Deadlift', 'Standing OHP'];
+
+function oneRMStorageKey(lift) {
+    // Stable key across spaces/punctuation
+    return `user1RM_${lift.replace(/[^a-z0-9]/gi, '')}`;
+}
+
+function getUserOneRM(lift) {
+    const raw = localStorage.getItem(oneRMStorageKey(lift));
+    const val = parseFloat(raw);
+    if (!raw || isNaN(val) || val <= 0) return null;
+    return val;
+}
+
+function roundTo5(n) {
+    return Math.round(n / 5) * 5;
+}
+
+function formatLb(n) {
+    return `${n} lb`;
+}
+
+function get531WeekInfo(programWeek) {
+    const wk = ((programWeek - 1) % 4) + 1;
+    switch (wk) {
+        case 1:
+            return { label: '5s', pct: [0.65, 0.75, 0.85], reps: ['5', '5', '5+'] };
+        case 2:
+            return { label: '3s', pct: [0.70, 0.80, 0.90], reps: ['3', '3', '3+'] };
+        case 3:
+            return { label: '5/3/1', pct: [0.75, 0.85, 0.95], reps: ['5', '3', '1+'] };
+        case 4:
+        default:
+            return { label: 'Deload', pct: [0.40, 0.50, 0.60], reps: ['5', '5', '5'] };
+    }
+}
+
+function getDefaultsForItem(item) {
+    if (MAIN_LIFTS.includes(item.ex)) {
+        const wk = get531WeekInfo(item.w);
+        const oneRM = getUserOneRM(item.ex);
+        if (!oneRM) {
+            return {
+                defaultSets: 3,
+                defaultReps: wk.reps,
+                defaultLoad: ['-', '-', '-'],
+                badgeText: `5/3/1 (${wk.label}) – set 1RM in Settings`
+            };
+        }
+        // Wendler typically uses a 90% Training Max.
+        const trainingMax = oneRM * 0.9;
+        const loads = wk.pct.map(p => formatLb(roundTo5(trainingMax * p)));
+        const reps = wk.reps;
+        return {
+            defaultSets: 3,
+            defaultReps: reps,
+            defaultLoad: loads,
+            badgeText: `5/3/1 (${wk.label}): ${loads[0]}×${reps[0]}, ${loads[1]}×${reps[1]}, ${loads[2]}×${reps[2]}`
+        };
+    }
+    return {
+        defaultSets: item.defaultSets,
+        defaultReps: item.defaultReps,
+        defaultLoad: item.defaultLoad,
+        badgeText: `${item.defaultSets}×${item.defaultReps} @ ${item.defaultLoad}`
+    };
+}
 
 // Helper to find exercise data from UID
 function getExerciseFromUid(uid) {
@@ -675,9 +779,16 @@ function getSets(uid, defaultSets, defaultReps, defaultLoad) {
     const sets = [];
     const count = defaultSets || 1; 
     for (let i = 0; i < count; i++) {
-        sets.push({ reps: defaultReps || '-', load: defaultLoad || '-', done: false });
+        const repsVal = Array.isArray(defaultReps) ? (defaultReps[i] ?? defaultReps[defaultReps.length - 1] ?? '-') : (defaultReps || '-');
+        const loadVal = Array.isArray(defaultLoad) ? (defaultLoad[i] ?? defaultLoad[defaultLoad.length - 1] ?? '-') : (defaultLoad || '-');
+        sets.push({ reps: repsVal, load: loadVal, done: false });
     }
     return sets;
+}
+
+function getSetsForItem(uid, item) {
+    const defs = getDefaultsForItem(item);
+    return getSets(uid, defs.defaultSets, defs.defaultReps, defs.defaultLoad);
 }
 
 // Helper to find previous workout data for an exercise
@@ -752,7 +863,7 @@ function renderAnalytics() {
     });
     
     // Create canvas elements
-    const lifts = ['Bench Press', 'Front Squat', 'Trap-Bar Deadlift', 'Standing OHP'];
+    const lifts = ['Bench Press', 'Squat', 'Deadlift', 'Standing OHP'];
     
     // Container for lift charts
     const liftsContainer = document.createElement('div');
@@ -822,7 +933,7 @@ function renderAnalytics() {
         const daysExercises = workoutData.filter(d => d.w === item.w && d.d === item.d);
         const index = daysExercises.indexOf(item);
         const uid = `w${item.w}-d${item.d}-i${index}`;
-        const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
+        const sets = getSetsForItem(uid, item);
         
         // Rucking Logic
         if (item.ex === "Ruck March" && item.focus.includes("Ruck")) {
@@ -872,16 +983,16 @@ function renderAnalytics() {
             // Female Standards (approx multipliers)
             standards = {
                 'Bench Press': { beg: 0.5, int: 0.75, adv: 1.0 },
-                'Front Squat': { beg: 0.6, int: 0.95, adv: 1.25 },
-                'Trap-Bar Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
+                'Squat': { beg: 0.6, int: 0.95, adv: 1.25 },
+                'Deadlift': { beg: 1.0, int: 1.25, adv: 1.75 },
                 'Standing OHP': { beg: 0.35, int: 0.55, adv: 0.75 }
             };
         } else {
             // Male Standards
             standards = {
                 'Bench Press': { beg: 0.75, int: 1.15, adv: 1.5 },
-                'Front Squat': { beg: 0.85, int: 1.25, adv: 1.65 },
-                'Trap-Bar Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
+                'Squat': { beg: 0.85, int: 1.25, adv: 1.65 },
+                'Deadlift': { beg: 1.25, int: 1.75, adv: 2.25 },
                 'Standing OHP': { beg: 0.5, int: 0.75, adv: 1.0 }
             };
         }
@@ -1042,7 +1153,7 @@ function updateSummary(){
         if(dayIdx[k]===undefined) dayIdx[k]=0;
         const idx=dayIdx[k]++;
         const uid=`w${item.w}-d${item.d}-i${idx}`;
-        const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
+        const sets = getSetsForItem(uid, item);
         sets.forEach(s => {
             counts[item.w].total++;
             if(s.done) counts[item.w].done++;
@@ -1137,6 +1248,73 @@ function saveGender(gender) {
     if(document.getElementById('view-analytics').classList.contains('active')) {
         renderAnalytics();
     }
+}
+
+function saveOneRM(lift, oneRM) {
+    const key = oneRMStorageKey(lift);
+    if (oneRM === '' || oneRM === null || oneRM === undefined) {
+        localStorage.removeItem(key);
+        if (document.getElementById('view-workout').classList.contains('active')) renderWorkout();
+        if (document.getElementById('view-analytics').classList.contains('active')) renderAnalytics();
+        return;
+    }
+    const val = parseFloat(oneRM);
+    // Soft validation (avoid noisy alerts on every keystroke)
+    if (isNaN(val) || val < 45 || val > 2000) return;
+    localStorage.setItem(key, String(val));
+    // Refresh active views so prescriptions update immediately
+    if (document.getElementById('view-workout').classList.contains('active')) renderWorkout();
+    if (document.getElementById('view-analytics').classList.contains('active')) renderAnalytics();
+}
+
+function estimateOneRMFromLogs(lift) {
+    let best = 0;
+    workoutData.forEach((item) => {
+        if (item.ex !== lift) return;
+        const dayItems = workoutData.filter(i => i.w === item.w && i.d === item.d);
+        const idx = dayItems.indexOf(item);
+        const uid = `w${item.w}-d${item.d}-i${idx}`;
+        const sets = getSetsForItem(uid, item);
+        sets.forEach(s => {
+            if (!s.done) return;
+            const load = parseFloat(s.load);
+            const reps = parseFloat(s.reps);
+            if (isNaN(load) || isNaN(reps) || reps <= 0) return;
+            const e1rm = load * (1 + reps / 30);
+            if (e1rm > best) best = e1rm;
+        });
+    });
+    return best > 0 ? Math.round(best) : null;
+}
+
+function updateOneRMsFromLogs() {
+    const lifts = MAIN_LIFTS.slice();
+    const updates = [];
+    lifts.forEach(l => {
+        const est = estimateOneRMFromLogs(l);
+        if (est) updates.push({ lift: l, value: est });
+    });
+    if (updates.length === 0) {
+        alert("No completed main lift sets found yet to estimate 1RM.");
+        return;
+    }
+    const msg = updates.map(u => `${u.lift}: ${u.value} lb`).join('\n');
+    if (!confirm(`Update your saved 1RMs to these estimates?\n\n${msg}`)) return;
+    updates.forEach(u => {
+        localStorage.setItem(oneRMStorageKey(u.lift), String(u.value));
+    });
+    // Refresh settings inputs if present
+    const benchEl = document.getElementById('user-1rm-bench');
+    const squatEl = document.getElementById('user-1rm-squat');
+    const deadEl = document.getElementById('user-1rm-deadlift');
+    const ohpEl = document.getElementById('user-1rm-ohp');
+    if (benchEl) benchEl.value = localStorage.getItem(oneRMStorageKey('Bench Press')) || '';
+    if (squatEl) squatEl.value = localStorage.getItem(oneRMStorageKey('Squat')) || '';
+    if (deadEl) deadEl.value = localStorage.getItem(oneRMStorageKey('Deadlift')) || '';
+    if (ohpEl) ohpEl.value = localStorage.getItem(oneRMStorageKey('Standing OHP')) || '';
+    // Refresh active views
+    if (document.getElementById('view-workout').classList.contains('active')) renderWorkout();
+    if (document.getElementById('view-analytics').classList.contains('active')) renderAnalytics();
 }
 
 function updateHeaderName() {
@@ -1281,7 +1459,7 @@ function showWeekDetail(week) {
             if(dayIdx[k]===undefined) dayIdx[k]=0;
             const idx=dayIdx[k]++;
             const uid=`w${item.w}-d${item.d}-i${idx}`;
-            const sets = getSets(uid, item.defaultSets, item.defaultReps, item.defaultLoad);
+            const sets = getSetsForItem(uid, item);
             sets.forEach(s => {
                 totalSets++;
                 if(s.done) doneSets++;
@@ -1354,7 +1532,7 @@ function renderStrengthOverview() {
             <ul style="margin:5px 0 15px 20px;padding:0;color:var(--text);font-size:0.9rem;">
                 <li><strong>Mon: Upper Strength + Posture</strong> (Bench, Pull-ups, Rows, OHP, Core)</li>
                 <li><strong>Tue: Ruck (Short)</strong> - Speed/tempo work</li>
-                <li><strong>Wed: Lower Strength + Core</strong> (Front Squat, Trap-Bar DL, Lunges, Hip Thrust)</li>
+                <li><strong>Wed: Lower Strength + Core</strong> (Squat, Deadlift, Lunges, Hip Thrust)</li>
                 <li><strong>Thu: Upper Hypertrophy + Posture</strong> (DB work, Face Pulls, Lateral Raises)</li>
                 <li><strong>Fri: Ruck (Long)</strong> - Endurance building</li>
                 <li><strong>Sat: Full Body + Optional Ruck</strong></li>
@@ -1443,9 +1621,28 @@ function renderWorkout(){
         return;
     }
     
+    function isPostureItem(item) {
+        const note = (item.defaultNote || '').toLowerCase();
+        const name = (item.ex || '').toLowerCase();
+        return note.includes('posture') || name.includes('posture');
+    }
+
+    let dividerInserted = false;
     daysExercises.forEach((ex,index)=>{
+        if (!dividerInserted && isPostureItem(ex)) {
+            const hasNonPostureBefore = daysExercises.slice(0, index).some(i => !isPostureItem(i));
+            if (hasNonPostureBefore) {
+                const divider = document.createElement('div');
+                divider.className = 'workout-section-divider';
+                divider.textContent = 'Posture / Core';
+                container.appendChild(divider);
+                dividerInserted = true;
+            }
+        }
+
         const uid=`w${currentWeek}-d${currentDay}-i${index}`;
-        const sets=getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
+        const defaults = getDefaultsForItem(ex);
+        const sets=getSets(uid, defaults.defaultSets, defaults.defaultReps, defaults.defaultLoad);
         // Use saved note if exists, otherwise default note if available
         let savedNote=localStorage.getItem(uid+'_note');
         if (savedNote === null && ex.defaultNote) {
@@ -1486,7 +1683,7 @@ function renderWorkout(){
             </div>`;
         });
         
-        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}<span class="target-badge">${ex.defaultSets}×${ex.defaultReps} @ ${ex.defaultLoad}</span></div></div></div>
+        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}<span class="target-badge">${defaults.badgeText}</span></div></div></div>
         <div id="sets-${uid}">${setsHtml}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
             <button onclick="addSet('${uid}')" aria-label="Add another set" style="background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;font-size:0.9rem;cursor:pointer;">+ Add Set</button>
@@ -1506,7 +1703,7 @@ function getCurrentSetsState(uid) {
     } else {
          const ex = getExerciseFromUid(uid);
          if (ex) {
-            sets = getSets(uid, ex.defaultSets, ex.defaultReps, ex.defaultLoad);
+            sets = getSetsForItem(uid, ex);
          }
     }
     return sets;
@@ -1555,7 +1752,7 @@ function checkAndLogDayCompletion(uid) {
     
     dayItems.forEach((item, index) => {
         const itemUid = `w${w}-d${d}-i${index}`;
-        const sets = getSets(itemUid, item.defaultSets, item.defaultReps, item.defaultLoad);
+        const sets = getSetsForItem(itemUid, item);
         // If no sets (deleted all), consider incomplete to avoid false positives
         if (sets.length === 0) {
             allDone = false;
@@ -2019,6 +2216,20 @@ window.onload=function(){
     const savedGender = localStorage.getItem('userGender') || 'male';
     const genderSelect = document.getElementById('user-gender-select');
     if(genderSelect) genderSelect.value = savedGender;
+
+    // Set 1RM inputs
+    const bench1 = localStorage.getItem(oneRMStorageKey('Bench Press'));
+    const squat1 = localStorage.getItem(oneRMStorageKey('Squat'));
+    const dead1 = localStorage.getItem(oneRMStorageKey('Deadlift'));
+    const ohp1 = localStorage.getItem(oneRMStorageKey('Standing OHP'));
+    const benchEl = document.getElementById('user-1rm-bench');
+    const squatEl = document.getElementById('user-1rm-squat');
+    const deadEl = document.getElementById('user-1rm-deadlift');
+    const ohpEl = document.getElementById('user-1rm-ohp');
+    if (benchEl && bench1) benchEl.value = bench1;
+    if (squatEl && squat1) squatEl.value = squat1;
+    if (deadEl && dead1) deadEl.value = dead1;
+    if (ohpEl && ohp1) ohpEl.value = ohp1;
     
     if(savedStart){
         startDate=parseLocal(savedStart);
