@@ -726,6 +726,11 @@ function getExerciseFromUid(uid) {
         const w = parseInt(parts[0].substring(1));
         const d = parseInt(parts[1].substring(1));
         const i = parseInt(parts[2].substring(1));
+        
+        // Validate parsed values
+        if (isNaN(w) || isNaN(d) || isNaN(i) || w < 1 || w > 8 || d < 1 || d > 7 || i < 0) {
+            return null; // Invalid UID format
+        }
         const daysExercises = workoutData.filter(item => item.w === w && item.d === d);
         return daysExercises[i];
     } catch(e) {
@@ -841,6 +846,14 @@ function navigateTo(view) {
 // Chart instances management
 const chartInstances = {};
 
+// Utility function to escape HTML and prevent XSS
+function escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Analytics Logic
 function renderAnalytics() {
     const container = document.getElementById('analytics-content');
@@ -893,7 +906,7 @@ function renderAnalytics() {
         standardsContainer.style.padding = '10px';
         standardsContainer.style.marginTop = '15px';
         
-        standardsContainer.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Strength Comparison (vs BW: ${bw}lb)</div>
+        standardsContainer.innerHTML = `<div style="font-size:0.9rem;font-weight:bold;margin-bottom:5px;">Strength Comparison (vs BW: ${escapeHtml(bw)}lb)</div>
         <div style="position:relative;height:300px;"><canvas id="chart-standards" style="max-width:100%;height:300px;"></canvas></div>
         <div style="font-size:0.7rem;color:#64748b;margin-top:5px;text-align:center;">Based on general strength standards multipliers</div>`;
         
@@ -1152,8 +1165,12 @@ function importData(event) {
 
 // 5/3/1 Logic Helpers
 function saveTM(lift, value) {
-    if (value && value > 0) {
-        localStorage.setItem('tm_' + lift, value);
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 0 && numValue < 10000) { // Reasonable weight limit
+        localStorage.setItem('tm_' + lift, numValue);
+    } else if (value === '' || value === null) {
+        // Allow clearing training max
+        localStorage.removeItem('tm_' + lift);
     }
 }
 
@@ -1396,7 +1413,7 @@ function updateHeaderName() {
     // Actually, user asked for name at top of main screen.
     // Let's modify navigateTo to handle title updates dynamiclly.
     if(name && document.getElementById('view-dashboard').classList.contains('active')) {
-         titleEl.textContent = `Dashboard - ${name}`;
+         titleEl.textContent = `Dashboard - ${escapeHtml(name)}`;
     }
 }
 
@@ -1753,7 +1770,7 @@ function renderWorkout(){
             </div>`;
         });
         
-        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${ex.ex}<span class="target-badge">${ex.defaultSets}×${ex.defaultReps} @ ${ex.defaultLoad}</span></div></div></div>
+        card.innerHTML=`<div class="exercise-header"><div><div class="exercise-name">${escapeHtml(ex.ex)}<span class="target-badge">${escapeHtml(ex.defaultSets)}×${escapeHtml(ex.defaultReps)} @ ${escapeHtml(ex.defaultLoad)}</span></div></div></div>
         <div id="sets-${uid}">${setsHtml}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
             <button onclick="addSet('${uid}')" aria-label="Add another set" style="background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;font-size:0.9rem;cursor:pointer;">+ Add Set</button>
@@ -1822,6 +1839,11 @@ function checkAndLogDayCompletion(uid) {
     const parts = uid.split('-'); 
     const w = parseInt(parts[0].substring(1));
     const d = parseInt(parts[1].substring(1));
+    
+    // Validate parsed values
+    if (isNaN(w) || isNaN(d) || w < 1 || w > 8 || d < 1 || d > 7) {
+        return; // Invalid UID format
+    }
     
     // Check all exercises for this day
     let allDone = true;
@@ -2020,15 +2042,17 @@ function markWorkoutAsComplete(dateStr) {
         const itemUid = `w${currentWeek}-d${currentDay}-i${index}`;
         const sets = getCurrentSetsState(itemUid);
         
-        // Mark all sets as done
-        sets.forEach((set, setIdx) => {
-            if (!set.done) {
-                set.done = true;
-            }
-        });
-        
-        // Save the updated sets
-        localStorage.setItem(itemUid + '_sets', JSON.stringify(sets));
+        // Only mark sets as done if sets exist and are not empty
+        if (sets && sets.length > 0) {
+            sets.forEach((set, setIdx) => {
+                if (set && !set.done) {
+                    set.done = true;
+                }
+            });
+            
+            // Save the updated sets
+            localStorage.setItem(itemUid + '_sets', JSON.stringify(sets));
+        }
     });
     
     // Close modal and refresh
@@ -2041,9 +2065,51 @@ function getDayName(d){
     return 'Day ' + d;
 }
 function parseLocal(s){const p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
-function calculateCurrentDay(){const today=new Date();today.setHours(0,0,0,0);const diffTime=today-startDate;let diffDays=Math.floor(diffTime/(1000*60*60*24));if(diffDays<0)diffDays=0;currentWeek=Math.floor(diffDays/7)+1;currentDay=(diffDays%7)+1;if(currentWeek>8)currentWeek=8;if(currentWeek<1)currentWeek=1;}
+function calculateCurrentDay(){
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!startDate || isNaN(startDate.getTime())) {
+        // If startDate is invalid, default to today
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const str = `${y}-${m}-${d}`;
+        startDate = parseLocal(str);
+        if (!localStorage.getItem('ruckStartDate')) {
+            localStorage.setItem('ruckStartDate', str);
+        }
+    }
+    const diffTime = today - startDate;
+    let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if(diffDays < 0) diffDays = 0;
+    currentWeek = Math.floor(diffDays / 7) + 1;
+    currentDay = (diffDays % 7) + 1;
+    if(currentWeek > 8) currentWeek = 8;
+    if(currentWeek < 1) currentWeek = 1;
+    if(currentDay < 1) currentDay = 1;
+    if(currentDay > 7) currentDay = 7;
+}
 function jumpToToday(){calculateCurrentDay();renderWorkout();}
-function changeDay(offset){currentDay+=offset;if(currentDay>7){currentDay=1;currentWeek++;}else if(currentDay<1){currentDay=7;currentWeek--;}if(currentWeek>8){currentWeek=8;currentDay=7;}if(currentWeek<1){currentWeek=1;currentDay=1;}renderWorkout();}
+function changeDay(offset){
+    currentDay += offset;
+    if(currentDay > 7){
+        currentDay = 1;
+        currentWeek++;
+    } else if(currentDay < 1){
+        currentDay = 7;
+        currentWeek--;
+    }
+    if(currentWeek > 8){
+        currentWeek = 8;
+        currentDay = 7;
+    }
+    if(currentWeek < 1){
+        currentWeek = 1;
+        currentDay = 1;
+    }
+    renderWorkout();
+}
 
 // Timer Logic
 let timerInterval = null;
@@ -2136,22 +2202,28 @@ function initTimerState() {
     const savedPaused = localStorage.getItem('timerPausedTime');
     
     if (savedPaused) {
-        timerPausedTime = parseInt(savedPaused);
+        const paused = parseInt(savedPaused);
+        if (!isNaN(paused) && paused >= 0) {
+            timerPausedTime = paused;
+        }
     }
     
     if (savedStart) {
         // It was running when left/reloaded
-        timerStartTime = parseInt(savedStart);
-        timerRunning = true;
-        timerInterval = setInterval(updateTimerDisplay, 1000);
-        
-        // Update UI immediately
-        const btn = document.getElementById('timer-btn-toggle');
-        if(btn) {
-            btn.textContent = 'Pause';
-            btn.style.background = '#f59e0b';
+        const start = parseInt(savedStart);
+        if (!isNaN(start) && start > 0) {
+            timerStartTime = start;
+            timerRunning = true;
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            
+            // Update UI immediately
+            const btn = document.getElementById('timer-btn-toggle');
+            if(btn) {
+                btn.textContent = 'Pause';
+                btn.style.background = '#f59e0b';
+            }
         }
-    } else if (savedPaused) {
+    } else if (savedPaused && timerPausedTime > 0) {
         // It was paused
         updateTimerDisplay();
     }
@@ -2164,6 +2236,7 @@ let restTimerInterval = null;
 function startRestTimer(seconds) {
     restTimeRemaining = seconds;
     const overlay = document.getElementById('rest-timer-overlay');
+    if (!overlay) return; // Safety check
     overlay.style.display = 'flex';
     updateRestTimerDisplay();
     
@@ -2201,7 +2274,10 @@ function endRestTimer(playSound) {
         clearInterval(restTimerInterval);
         restTimerInterval = null;
     }
-    document.getElementById('rest-timer-overlay').style.display = 'none';
+    const overlay = document.getElementById('rest-timer-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
     
     if (playSound) {
         // Play sound and vibrate
@@ -2423,9 +2499,29 @@ window.onload=function(){
     }
     
     initTimerState();
+    
+    // Cleanup timers on page unload to prevent memory leaks
+    window.addEventListener('beforeunload', () => {
+        if (timerInterval) clearInterval(timerInterval);
+        if (restTimerInterval) clearInterval(restTimerInterval);
+        if (undoTimeout) clearTimeout(undoTimeout);
+        // Destroy all chart instances
+        Object.keys(chartInstances).forEach(key => {
+            if(chartInstances[key]) {
+                chartInstances[key].destroy();
+            }
+        });
+    });
 };
 document.getElementById('start-date-picker').addEventListener('change',function(e){localStorage.setItem('ruckStartDate',e.target.value);startDate=parseLocal(e.target.value);calculateCurrentDay();renderWorkout();});
-document.getElementById('week-selector').addEventListener('change',function(e){currentWeek=parseInt(e.target.value);currentDay=1;renderWorkout();});
+document.getElementById('week-selector').addEventListener('change',function(e){
+    const week = parseInt(e.target.value);
+    if (!isNaN(week) && week >= 1 && week <= 8) {
+        currentWeek = week;
+        currentDay = 1;
+        renderWorkout();
+    }
+});
 </script>
 </body>
 </html>
